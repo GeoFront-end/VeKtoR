@@ -1,0 +1,115 @@
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root{
+    --standart-header-padding: 40px;
+    --primary-accent: #2222CC;
+    --secondary-accent: #FF4B33;
+    --dark: #101010;
+    --light: #F5F5F5;
+}
+
+html, body {
+    background-color: var(--light);
+    color: var(--dark);
+    width: 100%;
+    height: 100%;
+    overflow-x: hidden;
+    z-index: 0;
+}
+
+
+header{
+    position: fixed;
+    z-index: 1000;
+    height: 90px; 
+    width: 100vw; 
+    display: flex; 
+    justify-content: 
+    space-between; padding: var(--standart-header-padding) var(--standart-header-padding) 0;
+}
+
+.toggle{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 50px;
+    width: 50px;
+    background-color: var(--secondary-accent);
+    border-radius: 25px;
+    cursor: pointer;
+}
+
+#square-container{
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 10000;
+}
+
+
+.square{
+    width: 100px;
+    height: 100px;
+    background-color: var(--primary-accent);
+    box-sizing: border-box;
+    pointer-events: none;
+}
+
+.content-overlay{
+    position: fixed;
+    display: flex;
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+    justify-content: center;
+    align-items: center;
+    gap: 5em;
+    background-color: var(--dark);
+    color: var(--light);
+    z-index: -1;
+}
+
+.content-overlay h1{
+    font-size: 4vw;
+    color: var(--secondary-accent);
+}
+
+.content-overlay .nav-link{
+    display: flex;
+    font-family: "RM Mono";
+}
+
+.content-overlay .nav-link span{
+    position: relative;
+    top: 0.3em;
+}
+
+.content-overlay .nav-link a{
+    padding: 0 .5em;
+    font-size: 2em;
+    font-weight: 300;
+    text-decoration: none;
+    color: var(--light);
+    text-transform: uppercase;
+}
+
+@media (max-width: 767px){
+    .content-overlay{
+        align-items: center;
+        flex-direction: column;
+        gap: 2em;
+    }
+
+    .content-overlay h1{
+        font-size: 8vw;
+    }
+}

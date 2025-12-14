@@ -6,6 +6,12 @@ window.addEventListener('DOMContentLoaded', () => {
     const icon = document.querySelector('.intern-logo svg path');
     const squareSize = 100;
 
+    toggleBtn.addEventListener('click', () => {
+        setTimeout(() => {
+            toggleBtn.classList.toggle('active');
+        }, 1500);
+    });
+
     let squares = [];
     let overlayVisible = false;
 
@@ -59,30 +65,22 @@ window.addEventListener('DOMContentLoaded', () => {
     function toggleMenu() {
         gsap.to(shortlogo, {
             autoAlpha: overlayVisible ? 1 : 0,
-            delay: overlayVisible ? 1.5 : 0,
-            duration: 0.2
+            delay: 1.5,
+            duration: 0.2,
         })
 
         gsap.to(icon, {
-            delay: overlayVisible ? 1.5 : 0,
+            delay: 1.5,
             duration: 0.2,
-            fill: overlayVisible ? "#FF4B33" : "#F5F5F5",
-            hover: {
-                
-            }
+            fill: overlayVisible ? "#FF4B33" : "#D9D9D9",
         })
 
         gsap.to(toggleBtn, {
-            delay: overlayVisible ? 1.5 : 0,
+            delay: 1.5,
             duration: 0.2,
-            background: overlayVisible ? "#FF4B33" : "#F5F5F5",
-            hover: {
-                
-            }
+            background: overlayVisible ? "#FF4B33" : "#D9D9D9",
         })
-
-
-
+        
         const numSquares = updateContainerSize();
         createSquares(numSquares, 0);
         animateSquares();

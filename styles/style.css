@@ -5,7 +5,7 @@
 }
 
 :root{
-    --standart-header-padding: 40px;
+    --standard-header-padding: 40px;
     --primary-accent: #2222CC;
     --secondary-accent: #FF4B33;
     --dark: #101010;
@@ -25,11 +25,11 @@ html, body {
 header{
     position: fixed;
     z-index: 1000;
-    height: 90px; 
+    height: auto; 
     width: 100vw; 
     display: flex; 
-    justify-content: 
-    space-between; padding: var(--standart-header-padding) var(--standart-header-padding) 0;
+    justify-content: space-between; 
+    padding: var(--standard-header-padding) var(--standard-header-padding) 0;
 }
 
 .toggle{
@@ -41,6 +41,54 @@ header{
     background-color: var(--secondary-accent);
     border-radius: 25px;
     cursor: pointer;
+    position: relative;
+}
+
+.toggle span{
+    height: 2px;
+    width: 20px;
+    position: absolute;
+    background-color: var(--primary-accent);
+}
+.toggle span:nth-child(1){
+    top: 46%;
+}
+.toggle span:nth-child(2){
+    top: 54%;
+}
+
+.toggle.active span:nth-child(1){
+    transform: rotate(45deg);
+    top: 50%;
+    background-color: var(--dark);
+}
+
+.toggle.active span:nth-child(2){
+    transform:rotate(-45deg);
+    top: 50%;
+    background-color: var(--dark);
+}
+
+.toggle:hover span:nth-child(1){
+    transform: translateX(2px);
+    transition: transform 0.3s ease;
+}
+
+.toggle:hover span:nth-child(2){
+    transform: translateX(-2px);
+    transition: transform 0.3s ease;
+}
+
+.toggle.active:hover span:nth-child(1){
+    transform: rotate(35deg);
+    top: 50%;
+    background-color: var(--dark);
+}
+
+.toggle.active:hover span:nth-child(2){
+    transform:rotate(-35deg);
+    top: 50%;
+    background-color: var(--dark);
 }
 
 #square-container{
@@ -72,7 +120,7 @@ header{
     height: 100vh;
     justify-content: center;
     align-items: center;
-    gap: 5em;
+    gap: 3em;
     background-color: var(--dark);
     color: var(--light);
     z-index: -1;
@@ -81,11 +129,34 @@ header{
 .content-overlay h1{
     font-size: 4vw;
     color: var(--secondary-accent);
+    text-transform: uppercase;
 }
 
 .content-overlay .nav-link{
     display: flex;
     font-family: "RM Mono";
+    position: relative;
+    cursor: pointer;
+    width: min-content;
+    text-wrap: nowrap;
+}
+
+.content-overlay .nav-link a::after{
+    position: absolute;
+    content: '';
+    height: 10px;
+    width: 100%;
+    background-color: var(--secondary-accent);
+    opacity: 0.5;
+    left: 0;
+    top: 35%;
+    transform: scaleX(0);
+    transform-origin: right;
+    transition: transform 0.5s ease;
+}
+.content-overlay .nav-link a:hover::after{
+    transform: scaleX(1);
+    transform-origin: left;
 }
 
 .content-overlay .nav-link span{
@@ -94,7 +165,7 @@ header{
 }
 
 .content-overlay .nav-link a{
-    padding: 0 .5em;
+    padding: 0 0 0 .5em;
     font-size: 2em;
     font-weight: 300;
     text-decoration: none;
@@ -102,14 +173,82 @@ header{
     text-transform: uppercase;
 }
 
-@media (max-width: 767px){
+.overlay-graphic path:hover{
+    stroke: var(--primary-accent);
+}
+
+@media (min-width: 768px) and (max-width: 979px) {
+    :root{
+        --standard-header-padding: 30px;
+    }
     .content-overlay{
-        align-items: center;
+        padding: 6em 1em 3em;
+        justify-content: space-between;
+        flex-direction: row;
+        gap: 4em;
+    }
+    .overlay-graphic{
+        width: 80vh;
+        height: 80vh;
+    }
+    .content-overlay h1{
+        display: none;
+    }
+    .navicon{
+        width: 50px;
+        height: 50px;
+    }
+    .navshortlogo{
+        width: 150px;
+        height: 50px;
+    }
+    .toggle{
+        height: 50px;
+        width: 50px;
+        border-radius: 25px;
+    }
+    .toggle svg{
+        width: 18px;
+        height: 8px;
+    }
+}
+
+@media (max-width: 767px) {
+    :root{
+        --standard-header-padding: 20px;
+    }
+    .content-overlay{
+        padding: 5em 0 2em;
+        justify-content: space-between;
         flex-direction: column;
         gap: 2em;
     }
-
     .content-overlay h1{
-        font-size: 8vw;
+        font-size: 15vw;
+    }
+    .navicon{
+        width: 40px;
+        height: 40px;
+    }
+    .navshortlogo{
+        width: 120px;
+        height: 40px;
+    }
+    .toggle{
+        height: 40px;
+        width: 40px;
+        border-radius: 20px;
+    }
+    .toggle svg{
+        width: 16px;
+        height: 7px;
+    }
+}
+@media (max-width: 320px) {
+    .overlay-graphic{
+        display: none;
+    }
+    .content-overlay .nav-link{
+        font-size: 4vw;
     }
 }

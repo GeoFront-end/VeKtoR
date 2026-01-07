@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Condensed:ital,wght@0,100..900;1,100..900&display=swap');
+
 *{
     margin: 0;
     padding: 0;
@@ -16,11 +18,22 @@ html, body {
     background-color: var(--light);
     color: var(--dark);
     width: 100%;
-    height: 100%;
+    height: auto;
+    min-height: 100%;
     overflow-x: hidden;
     z-index: 0;
+    transition: background-color 0.6s ease;
+    font-family: "Roboto Condensed", sans-serif;
 }
 
+body {
+    animation: background-transition linear;
+    animation-timeline: scroll(root);
+}
+
+body.accent {
+      background-color: var(--secondary-accent);
+}
 
 header{
     position: fixed;
@@ -32,6 +45,20 @@ header{
     padding: var(--standard-header-padding) var(--standard-header-padding) 0;
 }
 
+img{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+h2{
+    text-transform: uppercase;
+    font-size: 5em;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    line-height: 0.85;
+}
+
 .toggle{
     display: flex;
     justify-content: center;
@@ -39,7 +66,7 @@ header{
     height: 50px;
     width: 50px;
     background-color: var(--secondary-accent);
-    border-radius: 25px;
+    border-radius: 4px;
     cursor: pointer;
     position: relative;
 }
@@ -121,10 +148,18 @@ header{
     gap: 3em;
     background-color: var(--dark);
     color: var(--light);
-    z-index: -1;
+    z-index: 900;
+    pointer-events: none;
+    opacity: 0;
+}
+
+.content-overlay.active {
+    pointer-events: auto;
+    opacity: 1;
 }
 
 .content-overlay h1{
+    pointer-events: inherit;
     font-size: 4vw;
     color: var(--secondary-accent);
     text-transform: uppercase;
@@ -171,8 +206,20 @@ header{
     text-transform: uppercase;
 }
 
+.overlay-graphic{
+    pointer-events: all;
+}
+
 .overlay-graphic path:hover{
     stroke: var(--primary-accent);
+}
+
+.nav-links{
+    pointer-events: all;
+}
+
+section{
+    background-color: var(--light);
 }
 
 .hero-footer{
@@ -183,6 +230,7 @@ header{
     display: flex;
     justify-content: center;
     align-items: center;
+    align-content: center;
     z-index: 2;
     bottom: 0;
     color: var(--primary-accent);
@@ -225,8 +273,82 @@ header{
     text-wrap: wrap;
     text-align: center;
 }
+
 .hero-text-stroke{
     display: none;
+}
+
+h2{
+    text-transform: uppercase;
+    font-size: 5em;
+    font-weight: 900;
+    text-align: center;
+}
+
+.sticky-text-1,
+.sticky-text-2,
+.sticky-text-3{
+    position: relative;
+    width: 100vw;
+    height: 100svh;
+    overflow: hidden;
+    z-index: 3;
+}
+
+.sticky-text-1,
+.sticky-text-2{
+    background-color: var(--primary-accent);
+    color: var(--light);
+}
+
+.sticky-text-3{
+    color: var(--dark);
+}
+
+.text-container,
+.bg-sticky{
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    will-change: opacity, transform;
+    z-index: 1;
+}
+
+.text-container h2{
+    position: relative;
+    left: -0.035em;
+    letter-spacing: -0.05em;
+    transform-origin: 50% 0%;
+    transform: scale(0);
+}
+
+.sticky-text-1 .text-container h2{
+    font-size: 27vw;
+    font-weight: 300;
+    will-change: transform;
+}
+
+.sticky-text-2 .text-container h2{
+    font-size: 25vw;
+    font-weight: 500;
+    will-change: transform;
+}
+
+.sticky-text-3 .text-container h2{
+    font-size: 31vw;
+    font-weight: 900;
+}
+
+.header-sticky{
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 50%;
+    z-index: 2;
+    color: var(--primary-accent);
 }
 
 @media (min-width: 768px) and (max-width: 979px) {
@@ -257,7 +379,7 @@ header{
     .toggle{
         height: 50px;
         width: 50px;
-        border-radius: 25px;
+        border-radius: 4px;
     }
     .toggle svg{
         width: 18px;
@@ -292,7 +414,7 @@ header{
     .toggle{
         height: 40px;
         width: 40px;
-        border-radius: 20px;
+        border-radius: 2px;
     }
     .toggle svg{
         width: 16px;
@@ -320,7 +442,7 @@ header{
         z-index: 5;
         text-transform: uppercase;
         color: transparent;
-        -webkit-text-stroke: 1px var(--primary-accent);
+        -webkit-text-stroke: 1px var(--light);
         font-size: 9vw;
         width: 50%;
         text-wrap: wrap;
@@ -328,6 +450,12 @@ header{
     }
     .overlay-hero-logo{
         display: none;
+    }
+    h2{
+        font-size: 3em;
+    }
+    .header{
+        width: calc(100% - 4em);
     }
 }
 @media (max-width: 320px) {

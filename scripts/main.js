@@ -5,6 +5,20 @@ import Lenis from "lenis";
 
 let lenis;
 
+const cuboid = document.getElementById('cuboid');
+let currentRotation = 0;
+
+function rotateCuboid() {
+    currentRotation += 90;
+    cuboid.style.transform = `rotateX(${currentRotation}deg)`;
+}
+
+window.addEventListener('load', () => {
+    if (window.innerWidth >= 380 && window.innerWidth <= 979) {
+        setInterval(rotateCuboid, 3000);
+    }
+});
+
 window.addEventListener("DOMContentLoaded", () => {
     const menu = document.querySelector(".content-overlay");
     const squareContainer = document.querySelector("#square-container");
@@ -90,6 +104,8 @@ window.addEventListener("DOMContentLoaded", () => {
     }
 
     function toggleMenu() {
+        overlayVisible ? toggleBtn.classList.remove("active") : toggleBtn.classList.add("active");
+
         gsap.to(shortlogo, {
             autoAlpha: overlayVisible ? 1 : 0,
             delay: 1.5,

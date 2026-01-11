@@ -1,5 +1,11 @@
-import { defineConfig } from "vite";
+import { defineConfig } from 'vite';
 
 export default defineConfig({
-  base: "/VeKtoR/",
+  root: '.', // root directory
+  build: {
+    outDir: 'dist', // output folder
+    rollupOptions: {
+      input: './index.html', // main entry
+    },
+  },
 });

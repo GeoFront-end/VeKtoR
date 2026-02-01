@@ -68,7 +68,7 @@ nav p {
     top: 0;
     left: 0;
     width: 100vw;
-    height: 100vh;
+    height: 100dvh;
     overflow: hidden;
     background-color: var(--dark);
     color: var(--gray);
@@ -177,13 +177,13 @@ p{
 .loader {
     position: relative;
     width: 100vw;
-    height: 100vh;
+    height: 100dvh;
 }
 
 .loader-clip{
     position: absolute;
     width: 100vw;
-    height: 33.3vh;
+    height: 33.3dvh;
     overflow: clip;
     z-index: 10000;
 }
@@ -203,8 +203,8 @@ p{
 .clip-center{
     overflow: hidden;
     position: relative;
-    top: 33.3vh;
-    height: 33.4vh;
+    top: 33.3dvh;
+    height: 33.4dvh;
     width: 100vw;
 }
 
@@ -232,7 +232,7 @@ p{
     position: absolute;
     top: 0;
     width: 100%;
-    height: 100vh;
+    height: 100dvh;
     overflow: hidden;
     z-index: 1005;
     font-family: "Funnel Sans", sans-serif;
@@ -399,7 +399,7 @@ p{
 .hero{
     position: relative;
     width: 100vw;
-    height: 100vh;
+    height: 100svh;
     overflow: hidden;
 }
 

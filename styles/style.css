@@ -68,6 +68,7 @@ nav p {
     top: 0;
     left: 0;
     width: 100vw;
+    height: 100vh;
     height: 100svh;
     overflow: hidden;
     background-color: var(--dark);
@@ -177,12 +178,14 @@ p{
 .loader {
     position: relative;
     width: 100vw;
+    height: 100vh;
     height: 100svh;
 }
 
 .loader-clip{
     position: absolute;
     width: 100vw;
+    height: 33.3vh;
     height: 33.3svh;
     overflow: clip;
     z-index: 10000;
@@ -203,6 +206,8 @@ p{
 .clip-center{
     overflow: hidden;
     position: relative;
+    top: 33.3vh;
+    height: 33.4vh;
     top: 33.3svh;
     height: 33.4svh;
     width: 100vw;
@@ -232,6 +237,7 @@ p{
     position: absolute;
     top: 0;
     width: 100%;
+    height: 100vh;
     height: 100svh;
     overflow: hidden;
     z-index: 1005;
@@ -399,6 +405,7 @@ p{
 .hero{
     position: relative;
     width: 100vw;
+    height: 100vh;
     height: 100svh;
     overflow: hidden;
 }

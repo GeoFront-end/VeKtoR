@@ -88,6 +88,7 @@ window.addEventListener("DOMContentLoaded", () => {
     const menuImage = document.querySelector(".menu-img");
     const menuLinksWrapper = document.querySelector(".menu-links-wrapper");
     const linkHighlighter = document.querySelector(".link-highlighter");
+    const marqueeContainer = document.querySelector(".clip-center .marquee .marquee-container");
 
     //Menu animation variables
     let currentX = 0;
@@ -101,6 +102,12 @@ window.addEventListener("DOMContentLoaded", () => {
 
     let isMenuOpen = false;
     let isMenuAnimating = false;
+
+    //Marquee animation variables
+    let currentMarqueeX = 0;
+    let targetMarqueeX = 0;
+    const marqueeLerpFactor = 0.05;
+    let isPreloaderComplete = false;
 
     //Menu links text split
     const menuLinks = document.querySelectorAll(".menu-link a");
@@ -330,6 +337,49 @@ window.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    //Marquee container mouse movement
+    if (marqueeContainer) {
+        // Listen for preloader completion
+        window.addEventListener('preloaderComplete', () => {
+            isPreloaderComplete = true;
+        });
+
+        window.addEventListener("mousemove", (e) => {
+            if (window.innerWidth < 979) return;
+            if (!isPreloaderComplete) return;
+
+            const mouseX = e.clientX;
+            const viewportWidth = window.innerWidth;
+            
+            // Get first and last span positions
+            const spans = marqueeContainer.querySelectorAll('span');
+            if (spans.length === 0) return;
+            
+            const firstSpan = spans[0];
+            const lastSpan = spans[spans.length - 1];
+            
+            // Get absolute positions on screen
+            const firstSpanRect = firstSpan.getBoundingClientRect();
+            const lastSpanRect = lastSpan.getBoundingClientRect();
+            
+            // Current position of container relative to its current state
+            const currentContainerX = parseFloat(gsap.getProperty(marqueeContainer, "x")) || 0;
+            
+            // Calculate how much we need to move from current position
+            // When mouse is at left (0), first span should be at left edge (0)
+            const moveToAlignFirstSpan = -firstSpanRect.left + currentContainerX;
+            
+            // When mouse is at right (viewportWidth), last span should be at right edge
+            const moveToAlignLastSpan = (viewportWidth - lastSpanRect.right) + currentContainerX;
+            
+            // Mouse percentage across the screen (0 to 1)
+            const mousePercentage = mouseX / viewportWidth;
+            
+            // Interpolate between the two positions
+            targetMarqueeX = moveToAlignFirstSpan + mousePercentage * (moveToAlignLastSpan - moveToAlignFirstSpan);
+        });
+    }
+
     //Link highlighter position
     menuLinksContainers.forEach((link) => {
         link.addEventListener("mouseenter", () => {
@@ -365,6 +415,7 @@ window.addEventListener("DOMContentLoaded", () => {
         currentX += (targetX - currentX) * lerpFactor;
         currentHighlighterX += (targetHighlighterX - currentHighlighterX) * lerpFactor;
         currentHighlighterWidth += (targetHighlighterWidth - currentHighlighterWidth) * lerpFactor;
+        currentMarqueeX += (targetMarqueeX - currentMarqueeX) * marqueeLerpFactor;
 
         gsap.to(menuLinksWrapper, {
             x: currentX,
@@ -379,10 +430,59 @@ window.addEventListener("DOMContentLoaded", () => {
             ease: "power4.out",
         });
 
+        if (marqueeContainer) {
+            gsap.to(marqueeContainer, {
+                x: currentMarqueeX,
+                duration: 0.3,
+                ease: "power4.out",
+            });
+        }
+
         requestAnimationFrame(animate);
     }
 
     animate();
+});
+
+//Preloader
+gsap.from(".clip-top, .clip-bottom", 2, {
+    delay: 1,
+    height: "50vh",
+    ease: "power4.inOut",
+});
+
+gsap.to(".marquee", 3.5, {
+    delay: 0.75,
+    top: "50%",
+    ease: "power4.inOut",
+});
+
+gsap.from(".clip-top .marquee, .clip-bottom .marquee", 5, {
+    delay: 1,
+    left: "100%",
+    ease: "power4.inOut",
+});
+
+gsap.from(".clip-center .marquee", 5, {
+    delay: 1,
+    left: "-50%",
+    ease: "power4.inOut",
+});
+
+gsap.to(".clip-top", 2, {
+    delay: 6,
+    clipPath: "inset(0 0 100% 0)",
+    ease: "power4.inOut",
+});
+
+gsap.to(".clip-bottom", 2, {
+    delay: 6,
+    clipPath: "inset(100% 0 0 0)",
+    ease: "power4.inOut",
+    onComplete: () => {
+        // Enable marquee mouse interaction after preloader completes
+        window.dispatchEvent(new CustomEvent('preloaderComplete'));
+    }
 });
 
 //Three.js WebGL Scene
@@ -396,111 +496,214 @@ const config = {
     edgePadding: 0.1,
 };
 
-// RAM detection
-const deviceRAM = navigator.deviceMemory || 8; // fallback to 8GB if unknown
-const lowRAMFallback = deviceRAM < 6; // fallback image only if RAM < 6
-const isWideScreen = window.innerWidth >= 979;
+//RAM detection
+const deviceRAM = navigator.deviceMemory || 8; //fallback to 8GB if unknown
+const meetsRequirements = deviceRAM >= 8; //Check minimum requirements
+const isWideScreen = window.innerWidth >= 979; //Check minimum requirements
 
 const hero = document.querySelector(".hero");
+const heroContent = document.querySelector(".hero-content");
 const imageElement = document.getElementById("glassTexture");
+const checkbox = document.querySelector('.switch input[type="checkbox"]');
+const warningText = document.querySelector('.warn-footer h6');
 
-if (hero && imageElement) {
+let threeJsScene = null;
+let renderer = null;
+let animationId = null;
 
-    // Low RAM fallback
-    if (lowRAMFallback) {
-        const img = document.createElement("img");
-        img.src = imageElement.src;
-        img.style.width = "100%";
-        img.style.height = "auto";
-        img.style.objectFit = "cover";
-        hero.appendChild(img);
-        console.warn("Shaders disabled: RAM < 6GB.");
-    } else {
-        // Initialize Three.js shader scene
-        const scene = new THREE.Scene();
-        const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
-        hero.appendChild(renderer.domElement);
-
-        const mouse = { x: 0.5, y: 0.5 };
-        const targetMouse = { x: 0.5, y: 0.5 };
-        const lerp = (start, end, factor) => start + (end - start) * factor;
-
-        const textureSize = { x: 1, y: 1 };
-        const material = new THREE.ShaderMaterial({
-            uniforms: {
-                uTexture: { value: null },
-                uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
-                uTextureSize: { value: new THREE.Vector2(textureSize.x, textureSize.y) },
-                uMouse: { value: new THREE.Vector2(mouse.x, mouse.y) },
-                uParallaxStrength: { value: config.parallaxStrength },
-                uDistortionMultiplier: { value: config.distortionMultiplier },
-                uGlassStrength: { value: config.glassStrength },
-                uglassSmoothness: { value: config.glassSmoothness },
-                ustripesFrequency: { value: config.stripesFrequency },
-                uEdgePadding: { value: config.edgePadding },
-            },
-            vertexShader: window.vertexShader,
-            fragmentShader: window.fragmentShader,
-        });
-
-        const geometry = new THREE.PlaneGeometry(2, 2);
-        const mesh = new THREE.Mesh(geometry, material);
-        scene.add(mesh);
-
-        function loadImage() {
-            if(!imageElement.complete) {
-                imageElement.onload = loadImage;
-                return;
+//Checkbox interaction
+if (checkbox) {
+    checkbox.addEventListener('change', function(e) {
+        if (!meetsRequirements) {
+            e.preventDefault();
+            this.checked = false;
+            if (warningText) {
+                warningText.classList.add('show');
             }
-
-            const texture = new THREE.Texture(imageElement);
-            texture.minFilter = THREE.LinearFilter;
-            texture.magFilter = THREE.LinearFilter;
-            texture.generateMipmaps = false;
-            texture.needsUpdate = true;
-
-            textureSize.x = imageElement.naturalWidth || imageElement.width;
-            textureSize.y = imageElement.naturalHeight || imageElement.height;
-
-            texture.needsUpdate = true;
-            material.uniforms.uTexture.value = texture;
-            material.uniforms.uTextureSize.value.set(textureSize.x, textureSize.y);
+            return;
         }
-
-        if (imageElement.complete) {
-            loadImage();
+        
+        if (this.checked) {
+            if (warningText) {
+                warningText.classList.add('show');
+            }
+            initializeShaders();
         } else {
-            imageElement.onload = loadImage;
-        }
-
-        // Mouse interaction only on wide screens
-        window.addEventListener("mousemove", (e) => {
-            if (!isWideScreen) return;
-            targetMouse.x = e.clientX / window.innerWidth;
-            targetMouse.y = 1.0 - e.clientY / window.innerHeight;
-        });
-
-        window.addEventListener("resize", () => {
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            material.uniforms.uResolution.value.set(window.innerWidth, window.innerHeight);
-        });
-
-        function animateThree() {
-            requestAnimationFrame(animateThree);
-
-            // Lerp mouse only if wide screen
-            if (isWideScreen) {
-                mouse.x = lerp(mouse.x, targetMouse.x, config.lerpFactor);
-                mouse.y = lerp(mouse.y, targetMouse.y, config.lerpFactor);
-                material.uniforms.uMouse.value.set(mouse.x, mouse.y);
+            if (warningText) {
+                warningText.classList.remove('show');
             }
+            destroyShaders();
+            showFallbackImage();
+        }
+    });
+}
 
-            renderer.render(scene, camera);
+function showFallbackImage() {
+    if (!hero || !imageElement) return;
+    
+    const canvas = hero.querySelector('canvas');
+    if (canvas) {
+        canvas.remove();
+    }
+    
+    //Set background image on hero section
+    hero.style.backgroundImage = `url('${imageElement.src}')`;
+    hero.style.backgroundSize = 'cover';
+    hero.style.backgroundPosition = 'center';
+    hero.style.backgroundRepeat = 'no-repeat';
+}
+
+function destroyShaders() {
+    if (animationId) {
+        cancelAnimationFrame(animationId);
+        animationId = null;
+    }
+    
+    if (renderer) {
+        renderer.dispose();
+        renderer = null;
+    }
+    
+    if (threeJsScene) {
+        threeJsScene.traverse((object) => {
+            if (object.geometry) object.geometry.dispose();
+            if (object.material) {
+                if (object.material.uniforms && object.material.uniforms.uTexture.value) {
+                    object.material.uniforms.uTexture.value.dispose();
+                }
+                object.material.dispose();
+            }
+        });
+        threeJsScene = null;
+    }
+    
+    //Remove canvas from hero
+    if (hero) {
+        const canvas = hero.querySelector('canvas');
+        if (canvas) {
+            canvas.remove();
+        }
+    }
+}
+
+function initializeShaders() {
+    if (!hero || !imageElement) return;
+    
+    hero.style.backgroundImage = '';
+    
+    const canvas = hero.querySelector('canvas');
+    if (canvas) {
+        canvas.remove();
+    }
+    
+    //Initialize Three.js shader scene
+    const scene = new THREE.Scene();
+    threeJsScene = scene;
+    
+    const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+    
+    //Canvas styles to position
+    renderer.domElement.style.position = 'absolute';
+    renderer.domElement.style.top = '0';
+    renderer.domElement.style.left = '0';
+    renderer.domElement.style.width = '100%';
+    renderer.domElement.style.height = '100%';
+    renderer.domElement.style.zIndex = '0';
+    
+    if (heroContent) {
+        hero.insertBefore(renderer.domElement, heroContent);
+    } else {
+        hero.appendChild(renderer.domElement);
+    }
+
+    const mouse = { x: 0.5, y: 0.5 };
+    const targetMouse = { x: 0.5, y: 0.5 };
+    const lerp = (start, end, factor) => start + (end - start) * factor;
+
+    const textureSize = { x: 1, y: 1 };
+    const material = new THREE.ShaderMaterial({
+        uniforms: {
+            uTexture: { value: null },
+            uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+            uTextureSize: { value: new THREE.Vector2(textureSize.x, textureSize.y) },
+            uMouse: { value: new THREE.Vector2(mouse.x, mouse.y) },
+            uParallaxStrength: { value: config.parallaxStrength },
+            uDistortionMultiplier: { value: config.distortionMultiplier },
+            uGlassStrength: { value: config.glassStrength },
+            uglassSmoothness: { value: config.glassSmoothness },
+            ustripesFrequency: { value: config.stripesFrequency },
+            uEdgePadding: { value: config.edgePadding },
+        },
+        vertexShader: window.vertexShader,
+        fragmentShader: window.fragmentShader,
+    });
+
+    const geometry = new THREE.PlaneGeometry(2, 2);
+    const mesh = new THREE.Mesh(geometry, material);
+    scene.add(mesh);
+
+    function loadImage() {
+        if(!imageElement.complete) {
+            imageElement.onload = loadImage;
+            return;
         }
 
-        animateThree();
+        const texture = new THREE.Texture(imageElement);
+        texture.minFilter = THREE.LinearFilter;
+        texture.magFilter = THREE.LinearFilter;
+        texture.generateMipmaps = false;
+        texture.needsUpdate = true;
+
+        textureSize.x = imageElement.naturalWidth || imageElement.width;
+        textureSize.y = imageElement.naturalHeight || imageElement.height;
+
+        texture.needsUpdate = true;
+        material.uniforms.uTexture.value = texture;
+        material.uniforms.uTextureSize.value.set(textureSize.x, textureSize.y);
     }
+
+    if (imageElement.complete) {
+        loadImage();
+    } else {
+        imageElement.onload = loadImage;
+    }
+
+    //Mouse interaction only on wide screens
+    const mouseMoveHandler = (e) => {
+        if (!isWideScreen) return;
+        targetMouse.x = e.clientX / window.innerWidth;
+        targetMouse.y = 1.0 - e.clientY / window.innerHeight;
+    };
+    
+    window.addEventListener("mousemove", mouseMoveHandler);
+
+    const resizeHandler = () => {
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        material.uniforms.uResolution.value.set(window.innerWidth, window.innerHeight);
+    };
+    
+    window.addEventListener("resize", resizeHandler);
+
+    function animateThree() {
+        animationId = requestAnimationFrame(animateThree);
+
+        //Lerp mouse only if wide screen
+        if (isWideScreen) {
+            mouse.x = lerp(mouse.x, targetMouse.x, config.lerpFactor);
+            mouse.y = lerp(mouse.y, targetMouse.y, config.lerpFactor);
+            material.uniforms.uMouse.value.set(mouse.x, mouse.y);
+        }
+
+        renderer.render(scene, camera);
+    }
+
+    animateThree();
+}
+
+//Initialize with fallback image on page load
+if (hero && imageElement) {
+    showFallbackImage();
 }

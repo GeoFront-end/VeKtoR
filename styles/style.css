@@ -174,6 +174,228 @@ p{
     display: inline-block;
 }
 
+.loader {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+}
+
+.loader-clip{
+    position: absolute;
+    width: 100vw;
+    height: 33.3vh;
+    overflow: clip;
+    z-index: 10000;
+}
+
+.clip-top{
+    top: 0;
+    clip-path: inset(0 0 0 0);
+    background-color: var(--light);
+}
+
+.clip-bottom{
+    bottom: 0;
+    clip-path: inset(0 0 0 0);
+    background-color: var(--light);
+}
+
+.clip-center{
+    overflow: hidden;
+    position: relative;
+    top: 33.3vh;
+    height: 33.4vh;
+    width: 100vw;
+}
+
+.marquee{
+    position: absolute;
+    top: 200%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 200vw;
+    color: var(--light);
+    mix-blend-mode: difference;
+    font-size: 16vw;
+}
+
+.marquee-container{
+    width: 100%;
+    padding-top: 0.2em;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: "Zalando Sans Expanded", sans-serif;
+}
+
+.warn{
+    position: absolute;
+    top: 0;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+    z-index: 1005;
+    font-family: "Funnel Sans", sans-serif;
+    text-transform: uppercase;
+    display: flex;
+    justify-content: flex-end;
+    flex-direction: column;
+    font-size: 1em;
+}
+.warn .warn-footer{
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    text-align: left;
+    padding: 1em;
+}
+
+.warn-text{
+    width: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25em;
+}
+
+.warn-toggle{
+    display: flex;
+    align-items: center;
+}
+
+.switch {
+    margin-left: 1em;
+    width: 3.5em;
+    height: 2em;
+    --toggle-diameter: 1.5em;
+    --button-toggle-offset: calc((2em - var(--toggle-diameter)) / 2);
+    --toggle-shadow-offset: 10px;
+    --toggle-wider: 3em;
+}
+
+.slider {
+    display: inline-block;
+    width: 3.5em;
+    height: 2em;
+    background-color: var(--gray);
+    border-radius: 1em;
+    position: relative;
+    transition: 0.3s all ease-in-out;
+}
+
+.slider::after {
+    content: "";
+    display: inline-block;
+    width: var(--toggle-diameter);
+    height: var(--toggle-diameter);
+    background-color: var(--light);
+    border-radius: calc(var(--toggle-diameter) / 2);
+    position: absolute;
+    top: var(--button-toggle-offset);
+    left: var(--button-toggle-offset);
+    box-shadow: var(--toggle-shadow-offset) 0 calc(var(--toggle-shadow-offset) * 4) rgba(0, 0, 0, 0.1);
+    transition: 0.3s all ease-in-out;
+}
+
+.switch input[type="checkbox"]:checked + .slider {
+    background-color: var(--main);
+}
+
+.switch input[type="checkbox"]:checked + .slider::after {
+    left: calc(3.5em - var(--toggle-diameter) - var(--button-toggle-offset));
+    box-shadow: calc(var(--toggle-shadow-offset) * -1) 0 calc(var(--toggle-shadow-offset) * 4) rgba(0, 0, 0, 0.1);
+}
+
+.switch input[type="checkbox"] {
+    display: none;
+}
+
+.switch input[type="checkbox"]:active + .slider::after {
+    width: var(--toggle-wider);
+}
+
+.switch input[type="checkbox"]:checked:active + .slider::after {
+    left: calc(3.5em - var(--toggle-wider) - var(--button-toggle-offset));
+}
+
+@media (hover: none) and (pointer: coarse) {
+    .switch input[type="checkbox"]:active + .slider::after {
+        width: var(--toggle-wider);
+    }
+
+    .switch input[type="checkbox"]:checked:active + .slider::after {
+        left: calc(3.5em - var(--toggle-wider) - var(--button-toggle-offset));
+    }
+}
+
+.warn-footer h6{
+    font-size: 0.75em;
+    line-height: 1;
+    color: var(--main);
+    display: none;
+    text-transform: lowercase;
+}
+
+.warn-footer h6.show {
+    display: flex;
+    opacity: 0;
+    visibility: hidden;
+    animation: fadeIn 0.3s ease-in-out forwards;
+}
+
+@keyframes fadeIn {
+    to {
+        opacity: 1;
+        visibility: visible;
+    }
+}
+
+.continue-button {
+  width: auto;
+  height: 3em;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.5em;
+  background-color: var(--light);
+  border-radius: 30px;
+  color: var(--dark);
+  font-weight: 600;
+  border: none;
+  position: relative;
+  cursor: pointer;
+  transition-duration: .2s;
+  padding: 0.5em 1em;
+  transition-duration: .5s;
+  font-family: "Funnel Sans", sans-serif;
+}
+
+.svgIcon {
+  height: 25px;
+  transition-duration: .5s;
+}
+
+.bell path {
+  fill: var(--dark);
+}
+
+.continue-button:hover {
+  background-color: var(--main);
+  transition-duration: .5s;
+}
+
+.continue-button:active {
+  transform: scale(0.97);
+  transition-duration: .2s;
+}
+
+.continue-button:hover .svgIcon {
+  transform: rotate(-45deg);
+  transition-duration: .5s;
+}
+
 .hero{
     position: relative;
     width: 100vw;
@@ -236,6 +458,17 @@ p{
     .menu-link a{
         font-size: 2em;
         letter-spacing: 0;
+    }
+    .warn-text p {
+        font-size: 0.85em;
+        width: 30vw;
+    }
+    .warn-text h6 {
+        font-size: 0.7em;
+        width: 30vw;
+    }
+    .switch {
+        margin: 0;
     }
 }
 

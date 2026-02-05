@@ -457,6 +457,9 @@ const centerMarquee = document.querySelector(".clip-center .marquee")
 const warnFooter = document.querySelector(".warn-footer")
 
 continueButton.addEventListener("click", () => {
+    //Mark that user has seen the loader in this session
+    sessionStorage.setItem('hasSeenLoader', 'true');
+    
     const tl = gsap.timeline({
         onComplete: () => {
             lenis.start()
@@ -557,6 +560,50 @@ let threeJsScene = null;
 let renderer = null;
 let animationId = null;
 
+//Check if loader/warn was already shown
+const hasSeenLoaderThisSession = sessionStorage.getItem('hasSeenLoader') === 'true';
+
+//Handle loader/warn visibility on page load
+if (hasSeenLoaderThisSession) {
+    //Hide loader and warn immediately if already seen this session
+    if (warn) warn.style.display = 'none';
+    if (loader) loader.style.display = 'none';
+    if (warnFooter) warnFooter.style.display = 'none';
+    if (centerMarquee) centerMarquee.style.display = 'none';
+    
+    //Enable navigation and scroll immediately
+    lenis.start();
+    document.documentElement.style.overflow = '';
+    
+    const nav = document.querySelector('nav');
+    if (nav) {
+        gsap.set(nav, {
+            opacity: 1,
+            pointerEvents: 'all'
+        });
+    }
+    
+    //Dispatch preloader complete event immediately
+    window.dispatchEvent(new CustomEvent('preloaderComplete'));
+}
+
+//Load shader checkbox state from localStorage
+if (checkbox) {
+    const savedShaderState = localStorage.getItem('shaderEnabled');
+    if (savedShaderState !== null) {
+        checkbox.checked = savedShaderState === 'true';
+        
+        // Apply the saved state after a brief delay to ensure DOM is ready
+        if (checkbox.checked && meetsRequirements) {
+            setTimeout(() => {
+                initializeShaders();
+            }, 100);
+        } else {
+            showFallbackImage();
+        }
+    }
+}
+
 //Checkbox
 if (checkbox) {
     checkbox.addEventListener('change', function(e) {
@@ -568,6 +615,9 @@ if (checkbox) {
             }
             return;
         }
+        
+        //Save checkbox state to localStorage
+        localStorage.setItem('shaderEnabled', this.checked);
         
         if (this.checked) {
             if (warningText) {

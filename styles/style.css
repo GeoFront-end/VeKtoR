@@ -55,11 +55,19 @@ nav{
     justify-content: space-between;
     mix-blend-mode: difference;
     z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: color 1s ease, mix-blend-mode 1s ease;
 }
 
 nav p {
     padding: 1em;
     cursor: pointer;
+}
+
+nav.on-accent {
+    color: var(--dark);
+    mix-blend-mode: normal;
 }
 
 /* Menu Overlay */
@@ -69,7 +77,7 @@ nav p {
     left: 0;
     width: 100vw;
     height: 100vh;
-    height: 100svh;
+    height: 100dvh;
     overflow: hidden;
     background-color: var(--dark);
     color: var(--gray);
@@ -176,10 +184,12 @@ p{
 }
 
 .loader {
-    position: relative;
+    position: fixed;
     width: 100vw;
     height: 100vh;
     height: 100svh;
+    z-index: 1006;
+    pointer-events: none;
 }
 
 .loader-clip{
@@ -205,7 +215,8 @@ p{
 
 .clip-center{
     overflow: hidden;
-    position: relative;
+    position: absolute;
+    z-index: 1006;
     top: 33.3vh;
     height: 33.4vh;
     top: 33.3svh;
@@ -216,7 +227,7 @@ p{
 .marquee{
     position: absolute;
     top: 200%;
-    left: 50%;
+    left: 0;
     transform: translate(-50%, -50%);
     width: 200vw;
     color: var(--light);
@@ -226,7 +237,6 @@ p{
 
 .marquee-container{
     width: 100%;
-    padding-top: 0.2em;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -234,7 +244,7 @@ p{
 }
 
 .warn{
-    position: absolute;
+    position: fixed;
     top: 0;
     width: 100%;
     height: 100vh;
@@ -247,7 +257,9 @@ p{
     justify-content: flex-end;
     flex-direction: column;
     font-size: 1em;
+    background-color: var(--dark);
 }
+
 .warn .warn-footer{
     width: 100%;
     display: flex;
@@ -410,8 +422,17 @@ p{
     overflow: hidden;
 }
 
-.hero img#glassTexture{
-    display: none;
+.hero #glassTexture{
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    color: var(--dark); 
+    background-color: var(--main); 
+    height: 100svh; 
+    width: 100%;
+    font-size: 8em;
+    font-family: "UnifrakturMaguntia", cursive;
+
 }
 
 .hero-content{
@@ -423,6 +444,7 @@ p{
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
+    color: var(--dark);
 }
 
 .hero-content h2{
@@ -466,16 +488,38 @@ p{
         font-size: 2em;
         letter-spacing: 0;
     }
+
     .warn-text p {
         font-size: 0.85em;
         width: 30vw;
     }
+
     .warn-text h6 {
         font-size: 0.7em;
         width: 30vw;
     }
+
     .switch {
         margin: 0;
+    }
+
+    h2{
+        font-size: 3em;
+    }
+}
+
+@media (max-width: 480px) {
+    .warn-text p {
+        font-size: 0.75em;
+    }
+
+    .warn-text h6 {
+        font-size: 0.65em;
+        width: 30vw;
+    }
+
+    h2{
+        font-size: 2em;
     }
 }
 

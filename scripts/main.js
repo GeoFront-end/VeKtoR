@@ -64,8 +64,9 @@ void main() {
     float edgeFactor = smoothEdge(uv.x, uEdgePadding);
     uv.x = mix(uv.x, distortedX, edgeFactor);
 
-    // Parallax offset based on mouse
-    float parallax = -sign(0.5 - uMouse.x) * (abs(uMouse.x - 0.5)) * uParallaxStrength * (1.0 + abs(uv.x - vUv.x) * uDistortionMultiplier);
+    // Parallax offset based on mouse - FIXED to center at 0.5
+    float mouseOffset = uMouse.x - 0.5;
+    float parallax = -sign(mouseOffset) * abs(mouseOffset) * uParallaxStrength * (1.0 + abs(uv.x - vUv.x) * uDistortionMultiplier);
     uv += vec2(parallax * edgeFactor, 0.0);
 
     // Map UV to texture
@@ -75,7 +76,6 @@ void main() {
     gl_FragColor = texture2D(uTexture, texUV);
 }
 `;
-
 
 //Menu setup
 window.addEventListener("DOMContentLoaded", () => {
@@ -152,6 +152,9 @@ window.addEventListener("DOMContentLoaded", () => {
         isMenuAnimating = true;
 
         if (!isMenuOpen) {
+            menuOverride = true;
+            checkNavPosition();
+
             gsap.to(container, {
                 opacity: 0.5,
                 duration: 1.25,
@@ -243,6 +246,9 @@ window.addEventListener("DOMContentLoaded", () => {
                     gsap.set(menuLinksWrapper, { x: 0 });
                     currentX = 0;
                     targetX = 0;
+
+                    menuOverride = false;
+                    checkNavPosition();
 
                     isMenuOpen = false;
                     isMenuAnimating = false;
@@ -339,7 +345,6 @@ window.addEventListener("DOMContentLoaded", () => {
 
     //Marquee container mouse movement
     if (marqueeContainer) {
-        // Listen for preloader completion
         window.addEventListener('preloaderComplete', () => {
             isPreloaderComplete = true;
         });
@@ -351,31 +356,23 @@ window.addEventListener("DOMContentLoaded", () => {
             const mouseX = e.clientX;
             const viewportWidth = window.innerWidth;
             
-            // Get first and last span positions
             const spans = marqueeContainer.querySelectorAll('span');
             if (spans.length === 0) return;
             
             const firstSpan = spans[0];
             const lastSpan = spans[spans.length - 1];
             
-            // Get absolute positions on screen
             const firstSpanRect = firstSpan.getBoundingClientRect();
             const lastSpanRect = lastSpan.getBoundingClientRect();
             
-            // Current position of container relative to its current state
             const currentContainerX = parseFloat(gsap.getProperty(marqueeContainer, "x")) || 0;
             
-            // Calculate how much we need to move from current position
-            // When mouse is at left (0), first span should be at left edge (0)
             const moveToAlignFirstSpan = -firstSpanRect.left + currentContainerX;
             
-            // When mouse is at right (viewportWidth), last span should be at right edge
             const moveToAlignLastSpan = (viewportWidth - lastSpanRect.right) + currentContainerX;
             
-            // Mouse percentage across the screen (0 to 1)
             const mousePercentage = mouseX / viewportWidth;
             
-            // Interpolate between the two positions
             targetMarqueeX = moveToAlignFirstSpan + mousePercentage * (moveToAlignLastSpan - moveToAlignFirstSpan);
         });
     }
@@ -444,10 +441,53 @@ window.addEventListener("DOMContentLoaded", () => {
     animate();
 });
 
+const lenis = new Lenis()
+lenis.stop()
+
+lenis.on('scroll', ScrollTrigger.update)
+gsap.ticker.add((time) => {
+    lenis.raf(time * 1000)
+})
+gsap.ticker.lagSmoothing(0)
+
+const warn = document.querySelector(".warn")
+const loader = document.querySelector(".loader")
+const continueButton = document.querySelector(".continue-button")
+const centerMarquee = document.querySelector(".clip-center .marquee")
+const warnFooter = document.querySelector(".warn-footer")
+
+continueButton.addEventListener("click", () => {
+    const tl = gsap.timeline({
+        onComplete: () => {
+            lenis.start()
+            document.documentElement.style.overflow = ''
+        }
+    })
+
+    tl.to(centerMarquee, {
+        opacity: 0,
+        duration: 0.5,
+        ease: "power4.out"
+    })
+
+    tl.to([warn, warnFooter, centerMarquee], {
+        clipPath: "inset(0 0 100% 0)",
+        duration: 0.5,
+        ease: "power4.out"
+    })
+
+
+    gsap.to("nav", 1, {
+        opacity: 1,
+        pointerEvents: 'all',
+        ease: "power4.out",
+    })
+})
+
 //Preloader
 gsap.from(".clip-top, .clip-bottom", 2, {
     delay: 1,
-    height: "50vh",
+    height: "50svh",
     ease: "power4.inOut",
 });
 
@@ -480,12 +520,19 @@ gsap.to(".clip-bottom", 2, {
     clipPath: "inset(100% 0 0 0)",
     ease: "power4.inOut",
     onComplete: () => {
-        // Enable marquee mouse interaction after preloader completes
         window.dispatchEvent(new CustomEvent('preloaderComplete'));
     }
 });
 
-//Three.js WebGL Scene
+if (window.innerWidth <= 979) {
+    gsap.to(".clip-center .marquee span", 1, {
+        delay: 6,
+        opacity: 0,
+        ease: "power2.inOut",
+    })
+}
+
+//Three.js
 const config = {
     lerpFactor: 0.035,
     parallaxStrength: 0.1,
@@ -496,10 +543,9 @@ const config = {
     edgePadding: 0.1,
 };
 
-//RAM detection
-const deviceRAM = navigator.deviceMemory || 8; //fallback to 8GB if unknown
-const meetsRequirements = deviceRAM >= 8; //Check minimum requirements
-const isWideScreen = window.innerWidth >= 979; //Check minimum requirements
+const deviceRAM = navigator.deviceMemory || 6; //RAM detection & fallback to 6GB if unknown
+const meetsRequirements = deviceRAM >= 8; //Minimum requirements
+const isWideScreen = window.innerWidth >= 979; //Minimum requirements
 
 const hero = document.querySelector(".hero");
 const heroContent = document.querySelector(".hero-content");
@@ -511,7 +557,7 @@ let threeJsScene = null;
 let renderer = null;
 let animationId = null;
 
-//Checkbox interaction
+//Checkbox
 if (checkbox) {
     checkbox.addEventListener('change', function(e) {
         if (!meetsRequirements) {
@@ -546,11 +592,7 @@ function showFallbackImage() {
         canvas.remove();
     }
     
-    //Set background image on hero section
-    hero.style.backgroundImage = `url('${imageElement.src}')`;
-    hero.style.backgroundSize = 'cover';
-    hero.style.backgroundPosition = 'center';
-    hero.style.backgroundRepeat = 'no-repeat';
+    imageElement.style.display = 'flex';
 }
 
 function destroyShaders() {
@@ -577,7 +619,6 @@ function destroyShaders() {
         threeJsScene = null;
     }
     
-    //Remove canvas from hero
     if (hero) {
         const canvas = hero.querySelector('canvas');
         if (canvas) {
@@ -589,14 +630,13 @@ function destroyShaders() {
 function initializeShaders() {
     if (!hero || !imageElement) return;
     
-    hero.style.backgroundImage = '';
+    imageElement.style.display = 'none';
     
     const canvas = hero.querySelector('canvas');
     if (canvas) {
         canvas.remove();
     }
     
-    //Initialize Three.js shader scene
     const scene = new THREE.Scene();
     threeJsScene = scene;
     
@@ -605,7 +645,6 @@ function initializeShaders() {
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     
-    //Canvas styles to position
     renderer.domElement.style.position = 'absolute';
     renderer.domElement.style.top = '0';
     renderer.domElement.style.left = '0';
@@ -645,33 +684,46 @@ function initializeShaders() {
     const mesh = new THREE.Mesh(geometry, material);
     scene.add(mesh);
 
-    function loadImage() {
-        if(!imageElement.complete) {
-            imageElement.onload = loadImage;
-            return;
-        }
-
-        const texture = new THREE.Texture(imageElement);
+    function loadDivAsTexture() {
+        const tempCanvas = document.createElement('canvas');
+        const ctx = tempCanvas.getContext('2d');
+        
+        const width = 2048;
+        const height = 2048;
+        tempCanvas.width = width;
+        tempCanvas.height = height;
+        
+        const divStyle = window.getComputedStyle(imageElement);
+        const bgColor = divStyle.backgroundColor;
+        const textColor = divStyle.color;
+        const fontSize = parseFloat(divStyle.fontSize);
+        const fontWeight = divStyle.fontWeight;
+        const fontFamily = divStyle.fontFamily;
+        
+        ctx.fillStyle = bgColor;
+        ctx.fillRect(0, 0, width, height);
+        
+        ctx.fillStyle = textColor;
+        ctx.font = `${fontWeight} ${fontSize * 3}px ${fontFamily}`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(imageElement.textContent, width / 2, height / 2);
+        
+        const texture = new THREE.CanvasTexture(tempCanvas);
         texture.minFilter = THREE.LinearFilter;
         texture.magFilter = THREE.LinearFilter;
         texture.generateMipmaps = false;
         texture.needsUpdate = true;
 
-        textureSize.x = imageElement.naturalWidth || imageElement.width;
-        textureSize.y = imageElement.naturalHeight || imageElement.height;
+        textureSize.x = width;
+        textureSize.y = height;
 
-        texture.needsUpdate = true;
         material.uniforms.uTexture.value = texture;
         material.uniforms.uTextureSize.value.set(textureSize.x, textureSize.y);
     }
 
-    if (imageElement.complete) {
-        loadImage();
-    } else {
-        imageElement.onload = loadImage;
-    }
+    loadDivAsTexture();
 
-    //Mouse interaction only on wide screens
     const mouseMoveHandler = (e) => {
         if (!isWideScreen) return;
         targetMouse.x = e.clientX / window.innerWidth;
@@ -690,7 +742,6 @@ function initializeShaders() {
     function animateThree() {
         animationId = requestAnimationFrame(animateThree);
 
-        //Lerp mouse only if wide screen
         if (isWideScreen) {
             mouse.x = lerp(mouse.x, targetMouse.x, config.lerpFactor);
             mouse.y = lerp(mouse.y, targetMouse.y, config.lerpFactor);
@@ -703,7 +754,43 @@ function initializeShaders() {
     animateThree();
 }
 
-//Initialize with fallback image on page load
 if (hero && imageElement) {
-    showFallbackImage();
+    imageElement.style.display = 'flex';
 }
+
+// Nav accent background detection
+const nav = document.querySelector('nav');
+let menuOverride = false;
+
+function checkNavPosition() {
+    if (!nav) return;
+    
+    if (menuOverride) {
+        nav.classList.remove('on-accent');
+        return;
+    }
+    
+    const navRect = nav.getBoundingClientRect();
+    const navCenter = navRect.top + navRect.height / 2;
+    
+    const accentElements = document.querySelectorAll('[id="accent-bg"]');
+    
+    let isOverAccent = false;
+    
+    accentElements.forEach(element => {
+        const elementRect = element.getBoundingClientRect();
+        if (navCenter >= elementRect.top && navCenter <= elementRect.bottom) {
+            isOverAccent = true;
+        }
+    });
+    
+    if (isOverAccent) {
+        nav.classList.add('on-accent');
+    } else {
+        nav.classList.remove('on-accent');
+    }
+}
+
+window.addEventListener('scroll', checkNavPosition);
+window.addEventListener('resize', checkNavPosition);
+checkNavPosition();

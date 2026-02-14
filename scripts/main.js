@@ -77,6 +77,34 @@ void main() {
 }
 `;
 
+// MANUAL TEXT SPLITTING FUNCTION (no dependencies!)
+function splitTextIntoChars(element) {
+    const text = element.textContent;
+    const chars = [];
+    
+    // Clear the element
+    element.innerHTML = '';
+    
+    // Create span for each character
+    for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        const span = document.createElement('span');
+        span.textContent = char;
+        span.className = 'char';
+        span.style.display = 'inline-block';
+        
+        // Preserve spaces
+        if (char === ' ') {
+            span.style.width = '0.3em';
+        }
+        
+        element.appendChild(span);
+        chars.push(span);
+    }
+    
+    return chars;
+}
+
 //Menu setup
 window.addEventListener("DOMContentLoaded", () => {
 
@@ -109,17 +137,14 @@ window.addEventListener("DOMContentLoaded", () => {
     const marqueeLerpFactor = 0.05;
     let isPreloaderComplete = false;
 
-    //Menu links text split
+    //Menu links text split - Using manual splitting
     const menuLinks = document.querySelectorAll(".menu-link a");
     menuLinks.forEach((link) => {
-        const chars = link.querySelectorAll("span");
-        chars.forEach((char, charIndex) => {
-            const split = new SplitText(char, { type: "chars" });
-            split.chars.forEach((charElement) => {
-                charElement.classList.add("char");
-            });
+        const spans = link.querySelectorAll("span");
+        spans.forEach((span, charIndex) => {
+            const chars = splitTextIntoChars(span);
             if (charIndex === 1) {
-                gsap.set(split.chars, { y: "110%" });
+                gsap.set(chars, { y: "110%" });
             }
         });
     });
@@ -439,6 +464,93 @@ window.addEventListener("DOMContentLoaded", () => {
     }
 
     animate();
+
+    //Pavilion
+    gsap.registerPlugin(ScrollTrigger);
+
+    const h3Elements = document.querySelectorAll(".item h3");
+    h3Elements.forEach(h3 => {
+        splitTextIntoChars(h3);
+    });
+
+    console.log('H3 elements split:', h3Elements.length);
+
+    const pavilionContainers = document.querySelectorAll(".pavilion-container");
+
+    pavilionContainers.forEach((container, index) => {
+        let start, end;
+        
+        if (index % 2 === 0) {
+            start = "0%";
+            end = "10%";
+        } else {
+            start = "0%";
+            end = "-15%";
+        }
+
+        const pavilion = container.querySelector(".pavilion");
+        const h3 = container.querySelector(".item h3");
+        
+        if (!h3) {
+            console.warn('No h3 found in container', index);
+            return;
+        }
+
+        //Animate horizontal scroll
+        gsap.fromTo(pavilion, 
+            { x: start }, 
+            {
+                x: end,
+                scrollTrigger: {
+                    trigger: container,
+                    start: "top bottom",
+                    end: "150% top",
+                    scrub: true,
+                },
+            }
+        );
+
+        //Get all char elements
+        const chars = h3.querySelectorAll('.char');
+        
+        console.log(`Container ${index}: Found ${chars.length} chars in "${h3.textContent.trim()}"`);
+        
+        if (chars.length === 0) return;
+
+        const reverse = index % 2 !== 0;
+        
+        const tl = gsap.timeline({
+            scrollTrigger: {
+                trigger: container,
+                start: "50% bottom",
+                end: "top top",
+                scrub: true,
+            }
+        });
+
+        //Animate characters with stagger
+        chars.forEach((char, charIndex) => {
+            const progress = charIndex / (chars.length - 1);
+            const position = reverse ? (1 - progress) : progress;
+            
+            tl.fromTo(char,
+                {
+                    fontWeight: 100,
+                },
+                {
+                    fontWeight: 900,
+                    duration: 1,
+                    ease: "none",
+                },
+                position * 0.5
+            );
+        });
+    });
+
+    const lenis = new Lenis();
+    lenis.on("scroll", ScrollTrigger.update);
+    gsap.ticker.add((time) => lenis.raf(time * 1000));
+    gsap.ticker.lagSmoothing(0);
 });
 
 const lenis = new Lenis()
@@ -546,9 +658,9 @@ const config = {
     edgePadding: 0.1,
 };
 
-const deviceRAM = navigator.deviceMemory || 6; //RAM detection & fallback to 6GB if unknown
-const meetsRequirements = deviceRAM >= 8; //Minimum requirements
-const isWideScreen = window.innerWidth >= 979; //Minimum requirements
+const deviceRAM = navigator.deviceMemory || 6;
+const meetsRequirements = deviceRAM >= 8;
+const isWideScreen = window.innerWidth >= 979;
 
 const hero = document.querySelector(".hero");
 const heroContent = document.querySelector(".hero-content");
@@ -560,18 +672,14 @@ let threeJsScene = null;
 let renderer = null;
 let animationId = null;
 
-//Check if loader/warn was already shown
 const hasSeenLoaderThisSession = sessionStorage.getItem('hasSeenLoader') === 'true';
 
-//Handle loader/warn visibility on page load
 if (hasSeenLoaderThisSession) {
-    //Hide loader and warn immediately if already seen this session
     if (warn) warn.style.display = 'none';
     if (loader) loader.style.display = 'none';
     if (warnFooter) warnFooter.style.display = 'none';
     if (centerMarquee) centerMarquee.style.display = 'none';
     
-    //Enable navigation and scroll immediately
     lenis.start();
     document.documentElement.style.overflow = '';
     
@@ -583,17 +691,14 @@ if (hasSeenLoaderThisSession) {
         });
     }
     
-    //Dispatch preloader complete event immediately
     window.dispatchEvent(new CustomEvent('preloaderComplete'));
 }
 
-//Load shader checkbox state from localStorage
 if (checkbox) {
     const savedShaderState = localStorage.getItem('shaderEnabled');
     if (savedShaderState !== null) {
         checkbox.checked = savedShaderState === 'true';
         
-        // Apply the saved state after a brief delay to ensure DOM is ready
         if (checkbox.checked && meetsRequirements) {
             setTimeout(() => {
                 initializeShaders();
@@ -604,7 +709,6 @@ if (checkbox) {
     }
 }
 
-//Checkbox
 if (checkbox) {
     checkbox.addEventListener('change', function(e) {
         if (!meetsRequirements) {
@@ -616,7 +720,6 @@ if (checkbox) {
             return;
         }
         
-        //Save checkbox state to localStorage
         localStorage.setItem('shaderEnabled', this.checked);
         
         if (this.checked) {

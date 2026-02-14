@@ -1,4 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Funnel+Sans:ital,wght@0,300..800;1,300..800&family=UnifrakturMaguntia&family=Zalando+Sans+Expanded:ital,wght@0,200..900;1,200..900&display=swap');
+/* Updated to support full weight range 100-900 for variable font animation */
+@import url('https://fonts.googleapis.com/css2?family=Funnel+Sans:ital,wght@0,100..900;1,100..900&family=UnifrakturMaguntia&family=Zalando+Sans+Expanded:ital,wght@0,200..900;1,200..900&display=swap');
 
 *{
     margin: 0;
@@ -159,10 +160,11 @@ nav.on-accent {
     will-change: transform, width;
 }
 
-.char{
+.char, div[class*="char"]{
     position: relative;
     display: inline-block;
-    will-change: transform;
+    will-change: font-weight, font-variation-settings;
+    font-family: "Funnel Sans", sans-serif;
 }
 
 h1{
@@ -418,7 +420,6 @@ p{
     position: relative;
     width: 100vw;
     height: 100vh;
-    height: 100svh;
     overflow: hidden;
 }
 
@@ -428,7 +429,7 @@ p{
     justify-content: center; 
     color: var(--dark); 
     background-color: var(--main); 
-    height: 100svh; 
+    height: 100vh; 
     width: 100%;
     font-size: 8em;
     font-family: "UnifrakturMaguntia", cursive;
@@ -449,6 +450,127 @@ p{
 
 .hero-content h2{
     width: 60%;
+}
+
+.about{
+    display: flex;
+    flex-direction: column;
+    padding: 2em;
+    background-color: var(--dark);
+    color: var(--gray);
+    gap: 1em;
+    justify-content: center;
+    align-items: center;
+    width: 100vw;
+    height: 100svh;
+    text-align: justify;
+}
+
+.about p{
+    font-size: 2vw;
+    width: 50%;
+    height: auto;
+}
+
+.btn {
+  width: 50%;
+  height: 3em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+  background-color: var(--gray);
+  border-radius: 30px;
+  color: var(--dark);
+  font-weight: 600;
+  border: none;
+  position: relative;
+  cursor: pointer;
+  transition-duration: .2s;
+  padding: 0.5em 1em;
+  transition-duration: .5s;
+  font-family: "Funnel Sans", sans-serif;
+}
+
+.svgIcon {
+  height: 25px;
+  transition-duration: .5s;
+}
+
+.btn:hover {
+  background-color: var(--main);
+  transition-duration: .5s;
+}
+
+.btn:active {
+  transform: scale(0.97);
+  transition-duration: .2s;
+}
+
+.btn:hover .svgIcon {
+  transform: rotate(-45deg);
+  transition-duration: .5s;
+}
+
+.pavilions{
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 2em;
+    background-color: var(--light);
+    color: var(--dark);
+}
+
+.pavilion-container{
+    position: relative;
+    width: 125%;
+    height: 250px;
+    display: flex;
+    overflow: hidden;
+}
+
+.pavilion-container:nth-child(1),
+.pavilion-container:nth-child(2){
+    margin-bottom: 1em;
+}
+
+.pavilion{
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
+    display: flex;
+    gap: 1em;
+}
+
+.pavilion .item{
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.pavilion .item img{
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+#pavilion-1 .pavilion,
+#pavilion-3 .pavilion{
+    left: -15%;
+}
+
+.item.with-text{
+    flex: 1.5;
+}
+
+.item h3{
+    text-transform: uppercase;
+    font-size: 4em;
 }
 
 /* Responsive Menu Styles */
@@ -481,6 +603,32 @@ p{
     .hero-content h2{
         width: 100%;
     }
+
+    .about p{
+        font-size: 3vw;
+    }
+
+    .about p,
+    .btn{
+        width: 75%;
+    }
+
+    .pavilion-container{
+        width: 250%;
+        height: 150px;
+    }
+
+    #pavilion-2 .pavilion{
+        left: -35%;
+    }
+
+    .item.with-text{
+        flex: 1;
+    }
+
+    .item h3{
+        font-size: 2em;
+    }
 }
 
 @media (max-width: 767px) {
@@ -506,6 +654,19 @@ p{
     h2{
         font-size: 3em;
     }
+
+    .about p{
+        font-size: 7vw;
+    }
+
+    .about p,
+    .btn{
+        width: 100%;
+    }
+
+    .item h3{
+        font-size: 1em;
+    }
 }
 
 @media (max-width: 480px) {
@@ -526,4 +687,25 @@ p{
 /* Scrollbar Styling */
 ::-webkit-scrollbar {
     width: 0px;
+}
+
+html.lenis,
+html.lenis body{
+    height: auto;
+}
+
+.lenis.lenis-smooth{
+    scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+    overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+    overflow: hidden;
+}
+
+.lenis.lenis-smooth iframe{
+    pointer-events: none;
 }

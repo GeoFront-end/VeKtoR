@@ -73,6 +73,7 @@ nav.on-accent {
 .nav-item a{
     font-size: 1em;
     cursor: pointer;
+    color: inherit;
 }
 
 /* Menu Overlay */
@@ -647,23 +648,18 @@ a p{
     color: var(--dark);
     padding: 3em 3em;
     border-radius: 1em;
-    cursor: grab;
+    cursor: default;
     user-select: none;
     pointer-events: auto;
     z-index: 2;
-    border: var(--gray) 1px solid;
     opacity: 0;
-}
-
-.object:active {
-    cursor: grabbing;
 }
 
 .object.physics-ready {
     position: absolute;
 }
 
-/* Responsive Menu Styles */
+/* Responsive Styles */
 @media (max-width: 979px){
     .menu-content{
         top: 25%;

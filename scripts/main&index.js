@@ -1,0 +1,891 @@
+//Shaders and definition
+window.vertexShader = `
+    precision mediump float;
+    varying vec2 vUv;
+    void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }
+`;
+
+window.fragmentShader = `
+precision mediump float;
+
+uniform sampler2D uTexture;
+uniform vec2 uResolution;
+uniform vec2 uTextureSize;
+uniform vec2 uMouse;
+uniform float uParallaxStrength;
+uniform float uDistortionMultiplier;
+uniform float uGlassStrength;
+uniform float ustripesFrequency;
+uniform float uglassSmoothness;
+uniform float uEdgePadding;
+
+varying vec2 vUv;
+
+vec2 getCoveredUV(vec2 uv, vec2 textureSize) {
+    if (textureSize.x < 1.0 || textureSize.y < 1.0) return uv;
+    vec2 scale = uResolution / textureSize;
+    float s = max(scale.x, scale.y);
+    vec2 scaledSize = textureSize * s;
+    vec2 offset = (uResolution - scaledSize) * 0.5;
+    return (uv * uResolution - offset) / scaledSize;
+}
+
+float displacement(float x, float stripes, float strength) {
+    return mod(x, 1.0 / max(stripes, 1.0)) * strength;
+}
+
+float fractalGlass(float x) {
+    float d = 0.0;
+    for (int i = -5; i <= 5; i++) {
+        d += displacement(x + float(i) * uglassSmoothness, ustripesFrequency, uGlassStrength);
+    }
+    return x + d / 11.0;
+}
+
+float smoothEdge(float x, float padding) {
+    return clamp(min(x / padding, (1.0 - x) / padding), 0.0, 1.0);
+}
+
+void main() {
+    vec2 uv = vUv;
+    float distortedX = fractalGlass(uv.x);
+    float edgeFactor = smoothEdge(uv.x, uEdgePadding);
+    uv.x = mix(uv.x, distortedX, edgeFactor);
+    float mouseOffset = uMouse.x - 0.5;
+    float parallax = -sign(mouseOffset) * abs(mouseOffset) * uParallaxStrength * (1.0 + abs(uv.x - vUv.x) * uDistortionMultiplier);
+    uv += vec2(parallax * edgeFactor, 0.0);
+    vec2 texUV = getCoveredUV(uv, uTextureSize);
+    texUV = clamp(texUV, 0.0, 1.0);
+    gl_FragColor = texture2D(uTexture, texUV);
+}
+`;
+
+window.addEventListener("DOMContentLoaded", () => {
+  const container = document.querySelector(".container");
+  const navToggle = document.querySelector(".nav-toggle");
+  const menuOverlay = document.querySelector(".menu-overlay");
+  const menuContent = document.querySelector(".menu-content");
+  const menuImage = document.querySelector(".menu-img");
+  const menuLinksWrapper = document.querySelector(".menu-links-wrapper");
+  const linkHighlighter = document.querySelector(".link-highlighter");
+  const marqueeContainer = document.querySelector(
+    ".clip-center .marquee .marquee-container",
+  );
+
+  let currentX = 0;
+  let targetX = 0;
+  const lerpFactor = 0.05;
+
+  let currentHighlighterX = 0;
+  let targetHighlighterX = 0;
+  let currentHighlighterWidth = 0;
+  let targetHighlighterWidth = 0;
+
+  let isMenuOpen = false;
+  let isMenuAnimating = false;
+
+  let currentMarqueeX = 0;
+  let targetMarqueeX = 0;
+  const marqueeLerpFactor = 0.05;
+  let isPreloaderComplete = false;
+
+  const menuLinks = document.querySelectorAll(".menu-link a");
+  menuLinks.forEach((link) => {
+    const spans = link.querySelectorAll("span");
+    spans.forEach((span, spanIndex) => {
+      const split = new SplitText(span, { type: "chars" });
+      split.chars.forEach((c) => c.classList.add("char"));
+      if (spanIndex === 1) gsap.set(split.chars, { y: "110%" });
+    });
+  });
+
+  gsap.set(menuContent, { y: "50%", opacity: 0.25 });
+  gsap.set(menuImage, { scale: 0.5, opacity: 0.25 });
+  gsap.set(menuLinks, { y: "150%" });
+  gsap.set(linkHighlighter, { y: "450%" });
+
+  const defaultLinkText = document.querySelector(
+    ".menu-link:first-child a span",
+  );
+  if (defaultLinkText) {
+    const linkWidth = defaultLinkText.offsetWidth;
+    linkHighlighter.style.width = linkWidth + "px";
+    currentHighlighterWidth = linkWidth;
+    targetHighlighterWidth = linkWidth;
+
+    const defaultLinkTextElement = document.querySelector(
+      ".menu-link:first-child",
+    );
+    const linkRect = defaultLinkTextElement.getBoundingClientRect();
+    const menuWrapperRect = menuLinksWrapper.getBoundingClientRect();
+    const initialX = linkRect.left - menuWrapperRect.left;
+    currentHighlighterX = initialX;
+    targetHighlighterX = initialX;
+  }
+
+  function toggleMenu() {
+    if (isMenuAnimating) return;
+    isMenuAnimating = true;
+
+    if (!isMenuOpen) {
+      menuOverride = true;
+      checkNavPosition();
+
+      gsap.to(container, { opacity: 0.5, duration: 1.25, ease: "expo.out" });
+
+      gsap.to(menuOverlay, {
+        clipPath: "polygon(0% 100%, 100% 100%, 100% 0%, 0% 0%)",
+        duration: 1.25,
+        ease: "expo.out",
+        onComplete: () => {
+          gsap.set(".menu-link", { overflow: "visible" });
+          isMenuOpen = true;
+          isMenuAnimating = false;
+        },
+      });
+
+      gsap.to(menuContent, {
+        y: "0%",
+        opacity: 1,
+        duration: 1.5,
+        ease: "expo.out",
+      });
+      gsap.to(menuImage, {
+        scale: 1,
+        opacity: 1,
+        duration: 1.5,
+        ease: "expo.out",
+      });
+      gsap.to(menuLinks, {
+        y: "0%",
+        duration: 1.25,
+        stagger: 0.1,
+        delay: 0.25,
+        ease: "expo.out",
+      });
+      gsap.to(linkHighlighter, {
+        y: "0%",
+        duration: 1,
+        delay: 1,
+        ease: "power2.out",
+      });
+    } else {
+      gsap.to(container, { opacity: 1, duration: 1.25, ease: "expo.out" });
+      gsap.to(menuLinks, { y: "-200%", duration: 1.25, ease: "expo.out" });
+      gsap.to(menuContent, {
+        y: "-100%",
+        opacity: 0.25,
+        duration: 1.25,
+        ease: "expo.out",
+      });
+      gsap.to(menuImage, {
+        y: "-100%",
+        opacity: 0.5,
+        duration: 1.25,
+        ease: "expo.out",
+      });
+
+      gsap.to(menuOverlay, {
+        clipPath: "polygon(0% 0%, 100% 0%, 100% 0%, 0% 0%)",
+        duration: 1.25,
+        ease: "expo.out",
+        onComplete: () => {
+          gsap.set(menuOverlay, {
+            clipPath: "polygon(0% 100%, 100% 100%, 100% 100%, 0% 100%)",
+          });
+          gsap.set(menuLinks, { y: "150%" });
+          gsap.set(linkHighlighter, { y: "350%" });
+          gsap.set(menuContent, { y: "50%", opacity: 0.25 });
+          gsap.set(menuImage, { y: "0%", scale: 0.5, opacity: 0.25 });
+          gsap.set(".menu-link", { overflow: "hidden" });
+          gsap.set(menuLinksWrapper, { x: 0 });
+          currentX = 0;
+          targetX = 0;
+          menuOverride = false;
+          checkNavPosition();
+          isMenuOpen = false;
+          isMenuAnimating = false;
+        },
+      });
+    }
+  }
+
+  if (navToggle) navToggle.addEventListener("click", toggleMenu);
+
+  const menuLinksContainers = document.querySelectorAll(".menu-link");
+  menuLinksContainers.forEach((link) => {
+    link.addEventListener("mouseenter", () => {
+      if (window.innerWidth < 979) return;
+      const linkCopy = link.querySelectorAll("a span");
+      gsap.to(linkCopy[0].querySelectorAll(".char"), {
+        y: "-110%",
+        duration: 0.75,
+        ease: "expo.inOut",
+        stagger: 0.05,
+      });
+      gsap.to(linkCopy[1].querySelectorAll(".char"), {
+        y: "0%",
+        duration: 0.75,
+        ease: "expo.inOut",
+        stagger: 0.05,
+      });
+    });
+
+    link.addEventListener("mouseleave", () => {
+      if (window.innerWidth < 979) return;
+      const linkCopy = link.querySelectorAll("a span");
+      gsap.to(linkCopy[1].querySelectorAll(".char"), {
+        y: "110%",
+        duration: 0.75,
+        ease: "expo.inOut",
+        stagger: 0.05,
+      });
+      gsap.to(linkCopy[0].querySelectorAll(".char"), {
+        y: "0%",
+        duration: 0.75,
+        ease: "expo.inOut",
+        stagger: 0.05,
+      });
+    });
+  });
+
+  if (menuOverlay) {
+    menuOverlay.addEventListener("mousemove", (e) => {
+      if (window.innerWidth < 979) return;
+      const mouseX = e.clientX;
+      const viewportWidth = window.innerWidth;
+      const menuLinksWrapperWidth = menuLinksWrapper.offsetWidth;
+      const maxMoveRight = viewportWidth - menuLinksWrapperWidth;
+      const sensitivityRange = viewportWidth * 0.5;
+      const startX = viewportWidth - sensitivityRange;
+      const endX = startX + sensitivityRange;
+      let mousePercentage;
+      if (mouseX <= startX) mousePercentage = 0;
+      else if (mouseX >= endX) mousePercentage = 1;
+      else mousePercentage = (mouseX - startX) / sensitivityRange;
+      targetX = mousePercentage * maxMoveRight;
+    });
+  }
+
+  if (marqueeContainer) {
+    window.addEventListener("preloaderComplete", () => {
+      isPreloaderComplete = true;
+    });
+
+    window.addEventListener("mousemove", (e) => {
+      if (window.innerWidth < 979 || !isPreloaderComplete) return;
+      const spans = marqueeContainer.querySelectorAll("span");
+      if (spans.length === 0) return;
+      const firstSpanRect = spans[0].getBoundingClientRect();
+      const lastSpanRect = spans[spans.length - 1].getBoundingClientRect();
+      const currentContainerX =
+        parseFloat(gsap.getProperty(marqueeContainer, "x")) || 0;
+      const moveToAlignFirstSpan = -firstSpanRect.left + currentContainerX;
+      const moveToAlignLastSpan =
+        window.innerWidth - lastSpanRect.right + currentContainerX;
+      targetMarqueeX =
+        moveToAlignFirstSpan +
+        (e.clientX / window.innerWidth) *
+          (moveToAlignLastSpan - moveToAlignFirstSpan);
+    });
+  }
+
+  menuLinksContainers.forEach((link) => {
+    link.addEventListener("mouseenter", () => {
+      if (window.innerWidth < 979) return;
+      const linkRect = link.getBoundingClientRect();
+      const menuWrapperRect = menuLinksWrapper.getBoundingClientRect();
+      targetHighlighterX = linkRect.left - menuWrapperRect.left;
+      const linkCopyElement = link.querySelector("a span");
+      targetHighlighterWidth = linkCopyElement
+        ? linkCopyElement.offsetWidth
+        : link.offsetWidth;
+    });
+  });
+
+  if (menuLinksWrapper) {
+    menuLinksWrapper.addEventListener("mouseleave", () => {
+      const defaultLink = document.querySelector(".menu-link:first-child");
+      const defaultLinkSpan = defaultLink.querySelector("a span");
+      const linkRect = defaultLink.getBoundingClientRect();
+      const menuWrapperRect = menuLinksWrapper.getBoundingClientRect();
+      targetHighlighterX = linkRect.left - menuWrapperRect.left;
+      targetHighlighterWidth = defaultLinkSpan.offsetWidth;
+    });
+  }
+
+  function animate() {
+    currentX += (targetX - currentX) * lerpFactor;
+    currentHighlighterX +=
+      (targetHighlighterX - currentHighlighterX) * lerpFactor;
+    currentHighlighterWidth +=
+      (targetHighlighterWidth - currentHighlighterWidth) * lerpFactor;
+    currentMarqueeX += (targetMarqueeX - currentMarqueeX) * marqueeLerpFactor;
+
+    gsap.set(menuLinksWrapper, { x: currentX });
+    gsap.set(linkHighlighter, {
+      x: currentHighlighterX,
+      width: currentHighlighterWidth,
+    });
+    if (marqueeContainer) gsap.set(marqueeContainer, { x: currentMarqueeX });
+
+    requestAnimationFrame(animate);
+  }
+
+  animate();
+
+  // Single Lenis instance
+  const lenis = new Lenis();
+  lenis.stop();
+  lenis.on("scroll", ScrollTrigger.update);
+  gsap.ticker.add((time) => lenis.raf(time * 1000));
+  gsap.ticker.lagSmoothing(0);
+
+  // Physics
+  const animatePhysicsOnScroll = true;
+
+  const physicsConfig = {
+    gravity: { x: 0, y: 1 },
+    restitution: 0.5,
+    friction: 0.15,
+    frictionAir: 0.02,
+    density: 0.002,
+    wallThickness: 200,
+  };
+
+  let engine,
+    bodies = [],
+    topWall = null;
+
+  function clamp(val, min, max) {
+    return Math.max(min, Math.min(max, val));
+  }
+
+  function measureAllObjects(physicsContainer) {
+    const objects = Array.from(physicsContainer.querySelectorAll(".object"));
+
+    const wrapper = document.createElement("div");
+    wrapper.style.cssText = `
+            position: fixed;
+            top: -9999px;
+            left: -9999px;
+            visibility: hidden;
+            pointer-events: none;
+            display: flex;
+            flex-wrap: wrap;
+            width: ${window.innerWidth}px;
+        `;
+
+    const clones = objects.map((obj) => {
+      const clone = obj.cloneNode(true);
+      clone.style.position = "relative";
+      clone.style.visibility = "hidden";
+      clone.style.fontSize = window.getComputedStyle(obj).fontSize;
+      clone.style.padding = window.getComputedStyle(obj).padding;
+      clone.style.borderRadius = window.getComputedStyle(obj).borderRadius;
+      clone.style.border = window.getComputedStyle(obj).border;
+      clone.style.whiteSpace = "nowrap";
+      wrapper.appendChild(clone);
+      return clone;
+    });
+
+    document.body.appendChild(wrapper);
+    wrapper.offsetHeight;
+
+    const dimensions = clones.map((clone, i) => ({
+      element: objects[i],
+      width: clone.offsetWidth,
+      height: clone.offsetHeight,
+    }));
+
+    document.body.removeChild(wrapper);
+    return dimensions;
+  }
+
+  function initPhysics(physicsContainer, dimensions) {
+    if (engine) return;
+
+    dimensions.forEach(({ element }) => {
+      element.classList.add("physics-ready");
+      element.style.visibility = "hidden";
+    });
+
+    const containerWidth = physicsContainer.offsetWidth;
+    const containerHeight = physicsContainer.offsetHeight;
+    const wallThickness = physicsConfig.wallThickness;
+
+    engine = Matter.Engine.create();
+    engine.enableSleeping = false;
+    engine.gravity = physicsConfig.gravity;
+    engine.constraintIterations = 10;
+    engine.positionIterations = 20;
+    engine.velocityIterations = 16;
+    engine.timing.timeScale = 1;
+
+    const walls = [
+      Matter.Bodies.rectangle(
+        containerWidth / 2,
+        containerHeight + wallThickness / 2,
+        containerWidth + wallThickness * 2,
+        wallThickness,
+        { isStatic: true },
+      ),
+      Matter.Bodies.rectangle(
+        -wallThickness / 2,
+        containerHeight / 2,
+        wallThickness,
+        containerHeight + wallThickness * 2,
+        { isStatic: true },
+      ),
+      Matter.Bodies.rectangle(
+        containerWidth + wallThickness / 2,
+        containerHeight / 2,
+        wallThickness,
+        containerHeight + wallThickness * 2,
+        { isStatic: true },
+      ),
+    ];
+    Matter.World.add(engine.world, walls);
+
+    // Cursor pusher body (no drag, push only)
+    const cursorRadius = 40;
+    const cursorBody = Matter.Bodies.circle(-200, -200, cursorRadius, {
+      isStatic: true,
+      restitution: 0.5,
+      friction: 0,
+      frictionAir: 0,
+      frictionStatic: 0,
+      collisionFilter: { category: 0x0002, mask: 0x0001 },
+    });
+    Matter.World.add(engine.world, cursorBody);
+
+    if (physicsContainer)
+      physicsContainer.addEventListener("mousemove", (e) => {
+        const rect = physicsContainer.getBoundingClientRect();
+        Matter.Body.setPosition(cursorBody, {
+          x: e.clientX - rect.left,
+          y: e.clientY - rect.top,
+        });
+        Matter.Body.setVelocity(cursorBody, { x: 0, y: 0 });
+      });
+
+    if (physicsContainer)
+      physicsContainer.addEventListener("mouseleave", () => {
+        Matter.Body.setPosition(cursorBody, { x: -200, y: -200 });
+      });
+
+    dimensions.forEach(({ element, width, height }, index) => {
+      if (width === 0 || height === 0) return;
+
+      const startX = Math.random() * (containerWidth - width) + width / 2;
+      const startY = -200 - index * 120;
+      const startRotation = (Math.random() - 0.5) * Math.PI;
+
+      const body = Matter.Bodies.rectangle(startX, startY, width, height, {
+        restitution: physicsConfig.restitution,
+        friction: physicsConfig.friction,
+        frictionAir: physicsConfig.frictionAir,
+        density: physicsConfig.density,
+        sleepThreshold: Infinity,
+        collisionFilter: { category: 0x0001, mask: 0x0001 | 0x0002 },
+      });
+
+      Matter.Body.setAngle(body, startRotation);
+      Matter.Body.setAngularVelocity(body, (Math.random() - 0.5) * 0.2);
+
+      bodies.push({ body, element, width, height });
+      Matter.World.add(engine.world, body);
+    });
+
+    setTimeout(() => {
+      topWall = Matter.Bodies.rectangle(
+        containerWidth / 2,
+        -wallThickness / 2,
+        containerWidth + wallThickness * 2,
+        wallThickness,
+        { isStatic: true },
+      );
+      Matter.World.add(engine.world, topWall);
+    }, 3000);
+
+    let lastTime = performance.now();
+    let firstFrame = true;
+
+    gsap.ticker.add(() => {
+      const now = performance.now();
+      const delta = now - lastTime;
+      lastTime = now;
+      Matter.Engine.update(engine, 1000 / 60, delta / (1000 / 60));
+
+      bodies.forEach(({ body, element, width, height }) => {
+        const x = clamp(body.position.x - width / 2, 0, containerWidth - width);
+        const y = body.position.y - height / 2;
+        element.style.left = x + "px";
+        element.style.top = y + "px";
+        element.style.transform = `rotate(${body.angle}rad)`;
+      });
+
+      if (firstFrame) {
+        firstFrame = false;
+        dimensions.forEach(({ element }) => {
+          element.style.visibility = "visible";
+          element.style.opacity = "1";
+        });
+      }
+    });
+  }
+
+  Promise.all([
+    document.fonts.ready,
+    new Promise((resolve) => {
+      if (document.readyState === "complete") resolve();
+      else window.addEventListener("load", resolve);
+    }),
+  ]).then(() => {
+    const physicsContainer = document.querySelector(".object-container");
+    if (!physicsContainer) return;
+
+    const dimensions = measureAllObjects(physicsContainer);
+
+    if (animatePhysicsOnScroll) {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              observer.disconnect();
+              initPhysics(physicsContainer, dimensions);
+            }
+          });
+        },
+        { threshold: 0.1 },
+      );
+
+      observer.observe(physicsContainer);
+    } else {
+      initPhysics(physicsContainer, dimensions);
+    }
+  });
+
+  // Warn / continue button
+  const warn = document.querySelector(".warn");
+  const loader = document.querySelector(".loader");
+  const continueButton = document.querySelector(".continue-button");
+  const centerMarquee = document.querySelector(".clip-center .marquee");
+  const warnFooter = document.querySelector(".warn-footer");
+
+  if (continueButton)
+    continueButton.addEventListener("click", () => {
+      sessionStorage.setItem("hasSeenLoader", "true");
+
+      const tl = gsap.timeline({
+        onComplete: () => {
+          lenis.start();
+          document.documentElement.style.overflow = "";
+        },
+      });
+
+      tl.to(centerMarquee, { opacity: 0, duration: 0.5, ease: "power4.out" });
+      tl.to([warn, warnFooter, centerMarquee], {
+        clipPath: "inset(0 0 100% 0)",
+        duration: 0.5,
+        ease: "power4.out",
+      });
+      gsap.to("nav", 1, {
+        opacity: 1,
+        pointerEvents: "all",
+        ease: "power4.out",
+      });
+    });
+
+  // Preloader
+  gsap.from(".clip-top, .clip-bottom", 2, {
+    delay: 1,
+    height: "50svh",
+    ease: "power4.inOut",
+  });
+  gsap.to(".marquee", 3.5, { delay: 0.75, top: "50%", ease: "power4.inOut" });
+  gsap.from(".clip-top .marquee, .clip-bottom .marquee", 5, {
+    delay: 1,
+    left: "100%",
+    ease: "power4.inOut",
+  });
+  gsap.from(".clip-center .marquee", 5, {
+    delay: 1,
+    left: "-50%",
+    ease: "power4.inOut",
+  });
+  gsap.to(".clip-top", 2, {
+    delay: 6,
+    clipPath: "inset(0 0 100% 0)",
+    ease: "power4.inOut",
+  });
+  gsap.to(".clip-bottom", 2, {
+    delay: 6,
+    clipPath: "inset(100% 0 0 0)",
+    ease: "power4.inOut",
+    onComplete: () =>
+      window.dispatchEvent(new CustomEvent("preloaderComplete")),
+  });
+
+  if (window.innerWidth <= 979) {
+    gsap.to(".clip-center .marquee span", 1, {
+      delay: 6,
+      opacity: 0,
+      ease: "power2.inOut",
+    });
+  }
+
+  // Session storage skip loader
+  const hasSeenLoaderThisSession =
+    sessionStorage.getItem("hasSeenLoader") === "true";
+
+  if (hasSeenLoaderThisSession) {
+    if (warn) warn.style.display = "none";
+    if (loader) loader.style.display = "none";
+    if (warnFooter) warnFooter.style.display = "none";
+    if (centerMarquee) centerMarquee.style.display = "none";
+    lenis.start();
+    document.documentElement.style.overflow = "";
+    const nav = document.querySelector("nav");
+    if (nav) gsap.set(nav, { opacity: 1, pointerEvents: "all" });
+    window.dispatchEvent(new CustomEvent("preloaderComplete"));
+  }
+
+  // Three.js
+  const config = {
+    lerpFactor: 0.035,
+    parallaxStrength: 0.1,
+    distortionMultiplier: 10,
+    glassStrength: 2.0,
+    glassSmoothness: 0.0001,
+    stripesFrequency: 35.0,
+    edgePadding: 0.1,
+  };
+
+  const deviceRAM = navigator.deviceMemory || 6;
+  const meetsRequirements = deviceRAM >= 8;
+  const isWideScreen = window.innerWidth >= 979;
+
+  const hero = document.querySelector(".hero");
+  const heroContent = document.querySelector(".hero-content");
+  const imageElement = document.getElementById("glassTexture");
+  const checkbox = document.querySelector('.switch input[type="checkbox"]');
+  const warningText = document.querySelector(".warn-footer h6");
+
+  let threeJsScene = null;
+  let renderer = null;
+  let animationId = null;
+
+  if (checkbox) {
+    const savedShaderState = localStorage.getItem("shaderEnabled");
+    if (savedShaderState !== null) {
+      checkbox.checked = savedShaderState === "true";
+      if (checkbox.checked && meetsRequirements)
+        setTimeout(() => initializeShaders(), 100);
+      else showFallbackImage();
+    }
+  }
+
+  if (checkbox) {
+    checkbox.addEventListener("change", function (e) {
+      if (!meetsRequirements) {
+        e.preventDefault();
+        this.checked = false;
+        if (warningText) warningText.classList.add("show");
+        return;
+      }
+      localStorage.setItem("shaderEnabled", this.checked);
+      if (this.checked) {
+        if (warningText) warningText.classList.add("show");
+        initializeShaders();
+      } else {
+        if (warningText) warningText.classList.remove("show");
+        destroyShaders();
+        showFallbackImage();
+      }
+    });
+  }
+
+  function showFallbackImage() {
+    if (!hero || !imageElement) return;
+    const canvas = hero.querySelector("canvas");
+    if (canvas) canvas.remove();
+    imageElement.style.display = "flex";
+  }
+
+  function destroyShaders() {
+    if (animationId) {
+      cancelAnimationFrame(animationId);
+      animationId = null;
+    }
+    if (renderer) {
+      renderer.dispose();
+      renderer = null;
+    }
+    if (threeJsScene) {
+      threeJsScene.traverse((object) => {
+        if (object.geometry) object.geometry.dispose();
+        if (object.material) {
+          if (
+            object.material.uniforms &&
+            object.material.uniforms.uTexture.value
+          ) {
+            object.material.uniforms.uTexture.value.dispose();
+          }
+          object.material.dispose();
+        }
+      });
+      threeJsScene = null;
+    }
+    if (hero) {
+      const canvas = hero.querySelector("canvas");
+      if (canvas) canvas.remove();
+    }
+  }
+
+  function initializeShaders() {
+    if (!hero || !imageElement) return;
+    imageElement.style.display = "none";
+    const canvas = hero.querySelector("canvas");
+    if (canvas) canvas.remove();
+
+    const scene = new THREE.Scene();
+    threeJsScene = scene;
+    const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+    renderer.domElement.style.cssText =
+      "position:absolute;top:0;left:0;width:100%;height:100%;z-index:0;";
+
+    if (heroContent) hero.insertBefore(renderer.domElement, heroContent);
+    else hero.appendChild(renderer.domElement);
+
+    const mouse = { x: 0.5, y: 0.5 };
+    const targetMouse = { x: 0.5, y: 0.5 };
+    const lerp = (start, end, factor) => start + (end - start) * factor;
+
+    const material = new THREE.ShaderMaterial({
+      uniforms: {
+        uTexture: { value: null },
+        uResolution: {
+          value: new THREE.Vector2(window.innerWidth, window.innerHeight),
+        },
+        uTextureSize: { value: new THREE.Vector2(1, 1) },
+        uMouse: { value: new THREE.Vector2(0.5, 0.5) },
+        uParallaxStrength: { value: config.parallaxStrength },
+        uDistortionMultiplier: { value: config.distortionMultiplier },
+        uGlassStrength: { value: config.glassStrength },
+        uglassSmoothness: { value: config.glassSmoothness },
+        ustripesFrequency: { value: config.stripesFrequency },
+        uEdgePadding: { value: config.edgePadding },
+      },
+      vertexShader: window.vertexShader,
+      fragmentShader: window.fragmentShader,
+    });
+
+    scene.add(new THREE.Mesh(new THREE.PlaneGeometry(2, 2), material));
+
+    function loadDivAsTexture() {
+      const tempCanvas = document.createElement("canvas");
+      const ctx = tempCanvas.getContext("2d");
+      const width = 2048,
+        height = 2048;
+      tempCanvas.width = width;
+      tempCanvas.height = height;
+      const divStyle = window.getComputedStyle(imageElement);
+      ctx.fillStyle = divStyle.backgroundColor;
+      ctx.fillRect(0, 0, width, height);
+      ctx.fillStyle = divStyle.color;
+      ctx.font = `${divStyle.fontWeight} ${parseFloat(divStyle.fontSize) * 3}px ${divStyle.fontFamily}`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(imageElement.textContent, width / 2, height / 2);
+      const texture = new THREE.CanvasTexture(tempCanvas);
+      texture.minFilter = THREE.LinearFilter;
+      texture.magFilter = THREE.LinearFilter;
+      texture.generateMipmaps = false;
+      texture.needsUpdate = true;
+      material.uniforms.uTexture.value = texture;
+      material.uniforms.uTextureSize.value.set(width, height);
+    }
+
+    loadDivAsTexture();
+
+    window.addEventListener("mousemove", (e) => {
+      if (!isWideScreen) return;
+      targetMouse.x = e.clientX / window.innerWidth;
+      targetMouse.y = 1.0 - e.clientY / window.innerHeight;
+    });
+
+    window.addEventListener("resize", () => {
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      material.uniforms.uResolution.value.set(
+        window.innerWidth,
+        window.innerHeight,
+      );
+    });
+
+    function animateThree() {
+      animationId = requestAnimationFrame(animateThree);
+      if (isWideScreen) {
+        mouse.x = lerp(mouse.x, targetMouse.x, config.lerpFactor);
+        mouse.y = lerp(mouse.y, targetMouse.y, config.lerpFactor);
+        material.uniforms.uMouse.value.set(mouse.x, mouse.y);
+      }
+      renderer.render(scene, camera);
+    }
+
+    animateThree();
+  }
+
+  if (hero && imageElement) imageElement.style.display = "flex";
+
+  // Nav accent detection
+  const nav = document.querySelector("nav");
+  let menuOverride = false;
+
+  function checkNavPosition() {
+    if (!nav) return;
+    if (menuOverride) {
+      nav.classList.remove("on-accent");
+      return;
+    }
+    const navCenter =
+      nav.getBoundingClientRect().top + nav.getBoundingClientRect().height / 2;
+    let isOverAccent = false;
+    document.querySelectorAll('[id="accent-bg"]').forEach((element) => {
+      const rect = element.getBoundingClientRect();
+      if (navCenter >= rect.top && navCenter <= rect.bottom)
+        isOverAccent = true;
+    });
+    nav.classList.toggle("on-accent", isOverAccent);
+  }
+
+  // Pavilion
+  document
+    .querySelectorAll(".pavilion-container")
+    .forEach((pavilionContainer, index) => {
+      const pavilion = pavilionContainer.querySelector(".pavilion");
+      gsap.fromTo(
+        pavilion,
+        { x: "0%" },
+        {
+          x: index % 2 === 0 ? "10%" : "-15%",
+          scrollTrigger: {
+            trigger: pavilionContainer,
+            start: "top bottom",
+            end: "150% top",
+            scrub: 1.5,
+          },
+        },
+      );
+    });
+
+  window.addEventListener("scroll", checkNavPosition);
+  window.addEventListener("resize", checkNavPosition);
+  checkNavPosition();
+});

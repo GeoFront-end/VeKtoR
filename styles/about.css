@@ -1,0 +1,185 @@
+body {
+    background-color: var(--adiacent);
+    color: var(--light);
+    font-family: "Funnel Sans", sans-serif;
+}
+
+img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+h2 {
+    font-size: 3em;
+    font-weight: 900;
+    line-height: 1;
+    text-align: center;
+}
+
+nav {
+    opacity: 1;
+    pointer-events: all;
+}
+
+.about {
+    height: 100svh; 
+    width: 100%; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    background: var(--adiacent); 
+    color: var(--light); 
+    font-size: 4rem; 
+    font-family: 'Funnel Sans', sans-serif;
+    font-weight: 600;
+}
+
+.identity {
+    position: relative;
+    width: 100%;
+    height: 100svh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 2em;
+    overflow: visible !important;
+}
+
+.identity-headers-clip {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+}
+
+.identity-header {
+    position: relative;
+    width: 100%;
+    will-change: transform;
+}
+
+.identity-header img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+}
+
+.identity-copy {
+    position: relative;
+    width: 100%;
+    height: auto;
+    padding: 2em;
+    display: flex;
+    text-align: center;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--adiacent);
+}
+
+.animate-text {
+    position: relative;
+    width: 50%;
+    color: var(--gray);
+    margin: 0 auto;
+}
+
+img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    backface-visibility: hidden;
+}
+
+.space {
+    position: relative;
+    width: 100%;
+    height: 100svh;
+    overflow: hidden;
+}
+
+.gallery-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform-style: preserve-3d;
+    perspective: 2000px;
+    will-change: transform;
+}
+
+.gallery {
+    position: relative;
+    width: 600px;
+    height: 600px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transform-origin: center;
+    will-change: transform;
+}
+
+.card {
+    position: absolute;
+    width: 45px;
+    height: 3.75;
+    border-radius: 4px;
+    transform-origin: center;
+    will-change: transform;
+    transform-style: preserve-3d;
+    backface-visibility: visible;
+    overflow: hidden;
+    aspect-ratio: 3/4;
+}
+
+.title-container {
+    position: fixed;
+    bottom: 25%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 2.625em;
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0%, 100%);
+    color: var(--dark);
+    text-transform: none;
+}
+
+.title-container p {
+    position: absolute;
+    width: 100%;
+    text-align: center;
+    font-size: 2.25em;
+    font-weight: 900;
+    color: var(--dark);
+}
+
+.word {
+    position: relative;
+    display: inline-block;
+    will-change: transform;
+}
+
+@media (max-width: 979px) {
+    h2 {
+        font-size: 2em;
+    }
+
+    .animate-text {
+        width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    h2 {
+        font-size: 1.5em;
+    }
+}
+
+@media (max-width: 480px) {
+    h2 {
+        font-size: 1em;
+    }
+}

@@ -1,0 +1,23 @@
+const collection = [
+  { title: "printing...", img: "../assets/images/printing.jpg" },
+  { title: "art", img: "../assets/images/art2.jpg" },
+  { title: "art two/", img: "../assets/images/art.jpg" },
+  { title: "ahh..", img: "../assets/images/begginers.jpg" },
+  { title: "christmas!", img: "../assets/images/christmas.jpg" },
+  { title: "serious?", img: "../assets/images/designer.jpg" },
+  { title: "fll core", img: "../assets/images/fllcore.jpg" },
+  { title: "fll mood", img: "../assets/images/fllmood.jpg" },
+  { title: "programming...", img: "../assets/images/fllprogramming.jpg" },
+  { title: "ft.enigma", img: "../assets/images/ft.enigma.jpg" },
+  { title: "ft.enigma second time", img: "../assets/images/ft.enigma2.jpg" },
+  { title: "ftc", img: "../assets/images/ftcbuilding.jpg" },
+  { title: "ftc core", img: "../assets/images/ftccore.jpg" },
+  { title: "ftc mood", img: "../assets/images/ftcmood.jpg" },
+  { title: "ftc mood two", img: "../assets/images/ftcmood2.jpg" },
+  { title: "ughh?", img: "../assets/images/meeting.jpg" },
+  { title: "spikeeeee", img: "../assets/images/spike.jpg" },
+  { title: "sumo mood", img: "../assets/images/sumomood.jpg" },
+  { title: "winners are here", img: "../assets/images/winners.jpg" },
+  { title: "us :3 ?", img: "../assets/images/us.jpg" },
+];
+export default collection;

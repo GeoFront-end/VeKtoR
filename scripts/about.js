@@ -520,6 +520,7 @@ window.addEventListener("DOMContentLoaded", () => {
       const bgColor = gsap.utils.interpolate(colors.adiacent, colors.light, t);
       const grayColor = gsap.utils.interpolate(colors.gray, colors.dark, t);
       const darkColor = gsap.utils.interpolate(colors.light, colors.dark, t);
+      const lightColor = gsap.utils.interpolate(colors.dark, colors.light, t);
       const objColor = gsap.utils.interpolate(colors.dark, colors.light, t);
 
       bgAdiacentEls.forEach((el) => {
@@ -533,8 +534,8 @@ window.addEventListener("DOMContentLoaded", () => {
       });
 
       if (navEl) {
-        navEl.style.color = darkColor;
-        navEl.style.mixBlendMode = t > 0 ? "normal" : navOriginalMixBlend;
+        navEl.style.color = lightColor;
+        navEl.style.mixBlendMode = t > 0 ? "difference" : navOriginalMixBlend;
       }
 
       if (footerH2) footerH2.style.color = darkColor;
@@ -583,6 +584,12 @@ window.addEventListener("DOMContentLoaded", () => {
   const gallery = document.querySelector(".gallery");
   const galleryContainer = document.querySelector(".gallery-container");
   const titleContainer = document.querySelector(".title-container");
+
+  // ── Gallery hint ──────────────────────────────────────────────────
+  const galleryHint = document.createElement("div");
+  galleryHint.className = "gallery-hint";
+  galleryHint.textContent = "Click to explore";
+  galleryContainer.appendChild(galleryHint);
 
   const cards = [];
   const transformState = [];
@@ -721,6 +728,12 @@ window.addEventListener("DOMContentLoaded", () => {
     });
     const words = splitText.words;
 
+    gsap.to(galleryHint, {
+      opacity: 0,
+      duration: 0.4,
+      ease: "power2.in",
+    });
+
     gsap.set(titleContainer, { opacity: 0 });
     gsap.to(titleContainer, {
       opacity: 1,
@@ -789,6 +802,11 @@ window.addEventListener("DOMContentLoaded", () => {
           currentX: 0,
           currentY: 0,
           currentZ: 0,
+        });
+        gsap.to(galleryHint, {
+          opacity: 0.45,
+          duration: 0.5,
+          ease: "power2.out",
         });
       },
     });

@@ -77,7 +77,7 @@ window.addEventListener("DOMContentLoaded", () => {
         },
       });
       gsap.to(menuContent, {
-        y: "0%",
+        y: "-50%",
         opacity: 1,
         duration: 1.5,
         ease: "expo.out",
@@ -588,7 +588,7 @@ window.addEventListener("DOMContentLoaded", () => {
   // ── Gallery hint ──────────────────────────────────────────────────
   const galleryHint = document.createElement("div");
   galleryHint.className = "gallery-hint";
-  galleryHint.textContent = "Click to explore";
+  galleryHint.textContent = "Click an image to explore";
   galleryContainer.appendChild(galleryHint);
 
   const cards = [];
@@ -597,6 +597,7 @@ window.addEventListener("DOMContentLoaded", () => {
   let currentTitle = null;
   let isPreviewActive = false;
   let isTransitioning = false;
+  let activeIndex = null;
 
   const galleryConfig = {
     imageCount: 20,
@@ -662,9 +663,58 @@ window.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  function rotateToIndex(index, animateTitle = true) {
+    if (isTransitioning) return;
+
+    isTransitioning = true;
+    activeIndex = index;
+
+    const angle = transformState[index].angle;
+    const targetPosition = (Math.PI * 3) / 2;
+    let rotationRadians = targetPosition - angle;
+
+    if (rotationRadians > Math.PI) rotationRadians -= Math.PI * 2;
+    else if (rotationRadians < -Math.PI) rotationRadians += Math.PI * 2;
+
+    gsap.to(gallery, {
+      rotation: (rotationRadians * 180) / Math.PI + 360,
+      duration: 1.4,
+      ease: "power4.inOut",
+      onComplete: () => (isTransitioning = false),
+    });
+
+    if (!animateTitle) return;
+
+    // update title
+    if (currentTitle) {
+      currentTitle.remove();
+      currentTitle = null;
+    }
+
+    const titleText = cards[index].dataset.title;
+    const p = document.createElement("p");
+    p.textContent = titleText;
+    titleContainer.appendChild(p);
+    currentTitle = p;
+
+    const splitText = new SplitText(p, {
+      type: "words",
+      wordsClass: "word",
+    });
+
+    gsap.set(splitText.words, { y: "125%" });
+    gsap.to(splitText.words, {
+      y: "0%",
+      duration: 0.6,
+      ease: "power4.out",
+      stagger: 0.08,
+    });
+  }
+
   function togglePreview(index) {
     isPreviewActive = true;
     isTransitioning = true;
+    activeIndex = index;
 
     const angle = transformState[index].angle;
     const targetPosition = (Math.PI * 3) / 2;
@@ -749,6 +799,7 @@ window.addEventListener("DOMContentLoaded", () => {
       ease: "power4.out",
       stagger: 0.1,
     });
+    rotateToIndex(index);
   }
 
   function resetGallery() {
@@ -773,6 +824,7 @@ window.addEventListener("DOMContentLoaded", () => {
         onComplete: () => {
           currentTitle.remove();
           currentTitle = null;
+          activeIndex = null;
         },
       });
     }
@@ -944,4 +996,24 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 
   animateGallery();
+
+  document.addEventListener("keydown", (e) => {
+    if (!isPreviewActive || isTransitioning) return;
+
+    if (e.key === "ArrowRight") {
+      e.preventDefault();
+      const next = (activeIndex + 1) % cards.length;
+      rotateToIndex(next);
+    }
+
+    if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      const prev = (activeIndex - 1 + cards.length) % cards.length;
+      rotateToIndex(prev);
+    }
+
+    if (e.key === "Escape") {
+      resetGallery();
+    }
+  });
 });

@@ -92,10 +92,11 @@ nav {
 .about__content {
     display: flex;
     flex-direction: column;
-    justify-content: flex-end;
+    justify-content: center;
     padding: 2em 2em 0;
     width: 100vw;
     min-width: 0;
+    height: 100svh;
 }
 
 .about__headline {

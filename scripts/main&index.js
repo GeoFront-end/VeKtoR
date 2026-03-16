@@ -148,7 +148,7 @@ window.addEventListener("DOMContentLoaded", () => {
       });
 
       gsap.to(menuContent, {
-        y: "0%",
+        y: "-50%",
         opacity: 1,
         duration: 1.5,
         ease: "expo.out",

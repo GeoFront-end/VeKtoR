@@ -124,7 +124,6 @@ nav.on-accent {
 .menu-content {
     position: absolute;
     top: 50%;
-    transform: translateY(-50%);
     width: 100%;
     padding: 2em;
     display: flex;
@@ -134,7 +133,7 @@ nav.on-accent {
 }
 
 .menu-col {
-    max-width: 8em;
+    max-width: 10em;
 }
 
 .menu-col p {
@@ -285,7 +284,7 @@ p, a p {
 .marquee {
     position: absolute;
     top: 200%;
-    left: 0;
+    left: 35%;
     transform: translate(-50%, -50%);
     width: 200vw;
     color: var(--light);
@@ -673,7 +672,7 @@ p, a p {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    padding: 4em 0;
+    padding: 2em 0 1em 0;
     background-color: var(--light);
     color: var(--dark);
     gap: 0;
@@ -685,7 +684,7 @@ p, a p {
 .pavilions::before {
     content: "03 — Spotlight";
     position: absolute;
-    top: 1.75em;
+    top: 1em;
     left: 2em;
     font-size: 0.65em;
     font-weight: 700;
@@ -701,10 +700,7 @@ p, a p {
     display: flex;
     overflow: hidden;
     will-change: transform;
-}
-
-.pavilion-container:first-child {
-    margin-top: 2em;
+    margin-bottom: 1em;
 }
 
 .pavilion {

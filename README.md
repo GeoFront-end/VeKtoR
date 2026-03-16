@@ -6,9 +6,9 @@
 
 ## Overview
 
-VeKtoR is the digital home of Team VeKtoR — a student robotics team based in Chișinău, Moldova, active since 2023. The site is a multi-page experience built entirely with vanilla HTML, CSS, and JavaScript, leaning on GSAP, Matter.js, Three.js, and Lenis to bring it to life.
+VeKtoR is the digital home of Team VeKtoR — a student robotics team based in Criuleni, Moldova, active since 2023. The site is a multi-page experience built entirely with vanilla HTML, CSS, and JavaScript, leaning on GSAP, Matter.js, Three.js, and Lenis to bring it to life.
 
-The design direction is **editorial brutalist** — heavy typography, sharp contrast, raw layouts, and interactions that feel physical.
+The design direction is **editorial brutalist** — heavy typography, sharp contrast, raw layouts, repeating sections and interactions that feel physical.
 
 ---
 
@@ -41,7 +41,7 @@ The design direction is **editorial brutalist** — heavy typography, sharp cont
 │   └── sponsorship.css     # Sponsorship page styles
 └── assets/
     ├── images/             # Team photos used in gallery + pavilions
-    └── comercial/          # Logo, icons(not all used)
+    └── comercial/          # Logo, icons(using & future using)
 ```
 
 ---
@@ -76,11 +76,6 @@ All loaded via CDN — no build step required.
 ### Sponsorship
 - **Tier cards** — Bronze, Silver, Gold with full-height fill animation on hover; clicking a card scrolls to form and pre-selects that tier
 - **Multi-step form** — 3 steps with validation, animated transitions, and a success screen on submit
-
-### Shared
-- **Menu overlay** — clip-path reveal with staggered link entrances, mouse-driven horizontal drift, character-by-character hover swap
-- **Custom cursor** — dot + lagging ring with `mix-blend-mode: difference`, expands on interactive elements (about page)
-- **Nav accent detection** — nav automatically switches color when scrolling over light sections
 
 ---
 
@@ -118,10 +113,18 @@ Defined in `main&index.css`:
 
 ---
 
-## Team
+## Team & Credits
 
-**Team VeKtoR** — Tekwill Junior Ambassadors  
-Chișinău, Moldova · Active since 2023 · Year 03
+**Azure** - Dev&Design Team:
+*Rapesco Gheorghe* - Captain, Developer & Designer, Representative for Developers(Code and logic)
+*Turcan Korina* - Marketing, Trademark Policy, Representative of UI and UX for Users (Interafce and User Experience)
+
+**Team VeKtoR** — Robotics Team/Inc.
+Criuleni, Moldova · Active since 2023 · Year 03
+
+**Tekwill** - Organisator of the TJA contest
+
+*TJA - Tekwill Junior Ambassadors*
 
 ---
 
@@ -129,6 +132,6 @@ Chișinău, Moldova · Active since 2023 · Year 03
 
 **Github** - https://github.com/GeoFront-end/VeKtoR.git
 
-**GitHub Pgaes** - https://geofront-end.github.io/VeKtoR/
+**GitHub Pages** - https://geofront-end.github.io/VeKtoR/
 
 *Built with intention. No frameworks. No shortcuts.*
